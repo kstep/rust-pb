@@ -17,20 +17,20 @@ static BASE_URL: &'static str = "https://api.pushbullet.com/v2/";
 type Iden = String;
 type Cursor = String;
 
-trait PushBulletObject {
+trait PbObject {
     fn uri(&self) -> Url;
     fn iden<'a>(&'a self) -> &'a Iden;
 }
 
 trait PushTarget {
     fn ident(&self); // ???
-    fn create(&self, api: &mut PushBulletAPI) -> IoResult<()>;
-    fn update(&self, api: &mut PushBulletAPI) -> IoResult<()>;
-    fn delete(&self, api: &mut PushBulletAPI) -> IoResult<()>;
-    fn push(&self, api: &mut PushBulletAPI, push: &Push) -> IoResult<()>;
+    fn create(&self, api: &mut PbAPI) -> IoResult<()>;
+    fn update(&self, api: &mut PbAPI) -> IoResult<()>;
+    fn delete(&self, api: &mut PbAPI) -> IoResult<()>;
+    fn push(&self, api: &mut PbAPI, push: &Push) -> IoResult<()>;
 }
 
-trait PushBulletAPI {}
+trait PbAPI {}
 
 #[deriving(Show, PartialEq, Decodable, Encodable)]
 struct Account {
@@ -95,7 +95,7 @@ impl<S: Encoder<E>, E> Encodable<S, E> for Device {
 
 impl<S: Decoder<E>, E> Decodable<S, E> for Device {
     fn decode(decoder: &mut S) -> Result<Device, E> {
-        decoder.read_struct("root", 0, |d| {
+        decoder.read_struct("Device", 0, |d| {
             Ok(Device {
                 app_version: try!(d.read_struct_field("app_version", 0, |d| Decodable::decode(d))),
                 created: try!(d.read_struct_field("created", 0, |d| Decodable::decode(d))),
@@ -264,7 +264,7 @@ impl<S: Encoder<E>, E> Encodable<S, E> for Push {
     }
 }
 
-//impl PushBulletObject for Push {
+//impl PbObject for Push {
     //fn uri(&self) -> Url {
         //Url::parse(format!("pushes/{}", self.iden).as_slice()).unwrap()
     //}
@@ -272,7 +272,7 @@ impl<S: Encoder<E>, E> Encodable<S, E> for Push {
     //fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
 //}
 
-//impl PushBulletObject for Device {
+//impl PbObject for Device {
     //fn uri(&self) -> Url {
         //Url::parse(format!("devices/{}", self.iden).as_slice()).unwrap()
     //}
@@ -280,7 +280,7 @@ impl<S: Encoder<E>, E> Encodable<S, E> for Push {
     //fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
 //}
 
-//impl PushBulletObject for Contact {
+//impl PbObject for Contact {
     //fn uri(&self) -> Url {
         //Url::parse(format!("contacts/{}", self.iden).as_slice()).unwrap()
     //}
@@ -288,7 +288,7 @@ impl<S: Encoder<E>, E> Encodable<S, E> for Push {
     //fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
 //}
 
-//impl PushBulletObject for Grant {
+//impl PbObject for Grant {
     //fn uri(&self) -> Url {
         //Url::parse(format!("grants/{}", self.iden).as_slice()).unwrap()
     //}
@@ -365,16 +365,65 @@ enum PushData {
     AddressPush(String),
 }
 
-#[deriving(Show, PartialEq, Decodable, Encodable)]
+
+#[deriving(Show, PartialEq, Decodable)]
 struct Envelope {
     //aliases: Vec<Alias>,
     //channels: Vec<Channel>,
     //clients: Vec<Client>,
-    devices: Vec<Device>,
-    grants: Vec<Grant>,
-    pushes: Vec<Push>,
+    devices: Option<Vec<Device>>,
+    grants: Option<Vec<Grant>>,
+    pushes: Option<Vec<Push>>,
+    contacts: Option<Vec<Contact>>,
     //subscriptions: Vec<Subscription>,
     cursor: Option<Cursor>,
+    error: Option<Error>,
+}
+
+impl Envelope {
+    fn is_ok(&self) -> bool {
+        self.error.is_none()
+    }
+    fn is_err(&self) -> bool {
+        self.error.is_some()
+    }
+    fn ok<'a>(&'a self) -> Option<&'a Envelope> {
+        match self.error {
+            Some(..) => None,
+            None => Some(self)
+        }
+    }
+    fn err<'a>(&'a self) -> Option<&'a Error> {
+        match self.error {
+            Some(ref err) => Some(err),
+            None => None
+        }
+    }
+    fn result<'a>(&'a self) -> Result<&'a Envelope, &'a Error> {
+        match self.error {
+            Some(ref err) => Err(err),
+            None => Ok(self)
+        }
+    }
+}
+
+#[deriving(Show, PartialEq)]
+struct Error {
+    message: String,
+    typ: String,
+    cat: String,
+}
+
+impl<S: Decoder<E>, E> Decodable<S, E> for Error {
+    fn decode(decoder: &mut S) -> Result<Error, E> {
+        decoder.read_struct("Error", 0, |d| {
+            Ok(Error {
+                message: try!(d.read_struct_field("message", 0, |d| Decodable::decode(d))),
+                typ: try!(d.read_struct_field("type", 0, |d| Decodable::decode(d))),
+                cat: try!(d.read_struct_field("cat", 0, |d| Decodable::decode(d))),
+            })
+        })
+    }
 }
 
 #[test]
@@ -514,5 +563,71 @@ fn test_account_decode() {
             api_key: "9aau3q49898u98me3q48u".to_string(),
         }),
         Err(e) => fail!("Error: {}", e)
+    }
+}
+
+#[test]
+fn test_decode_err_result() {
+    let error = "{
+        \"error\": {
+            \"message\": \"The resource could not be found.\",
+            \"type\": \"invalid_request\",
+            \"cat\": \"~(=^‥^)\"
+        }
+    }";
+    let result: Result<Envelope, _> = json::decode(error);
+    match result {
+        Ok(ref env) => {
+            assert_eq!(*env, Envelope {
+                error: Some(Error {
+                    message: "The resource could not be found.".to_string(),
+                    typ: "invalid_request".to_string(),
+                    cat: "~(=^‥^)".to_string(),
+                }),
+                devices: None,
+                pushes: None,
+                contacts: None,
+                grants: None,
+                cursor: None
+            });
+
+            assert_eq!(env.is_ok(), false);
+            assert_eq!(env.is_err(), true);
+            //assert_eq!(env.err(), Some(&env.error.unwrap()));
+            assert_eq!(env.ok(), None);
+            //assert_eq!(env.result(), Err(&env.error.unwrap()));
+        },
+        err @ _ => fail!("Unexpected result: {}", err)
+    }
+}
+
+#[test]
+fn test_decode_ok_result() {
+    let envelope = "{
+        \"devices\": [],
+        \"grants\": [],
+        \"pushes\": [],
+        \"contacts\": []
+    }";
+    let result: Result<Envelope, _> = json::decode(envelope);
+    match result {
+        Ok(ref env) => {
+            assert_eq!(*env, Envelope {
+                devices: Some(vec![]),
+                grants: Some(vec![]),
+                pushes: Some(vec![]),
+                contacts: Some(vec![]),
+                error: None,
+                cursor: None
+            })
+
+            assert_eq!(env.is_ok(), true);
+            assert_eq!(env.is_err(), false);
+            assert_eq!(env.err(), None);
+            assert_eq!(env.ok(), Some(env));
+            assert_eq!(env.result(), Ok(env));
+        },
+        _ => ()
+        //err @ _ => fail!("Unexpected result: {}", err)
     }
 }

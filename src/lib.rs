@@ -7,11 +7,9 @@ use std::io::{Buffer, Reader, Writer, IoResult, BufferedStream, standard_error};
 use websocket::socket::WebSocket;
 use url::Url;
 use http::client::RequestWriter;
-use http::method::Get;
-use serialize::base64::ToBase64;
-use serialize::base64::STANDARD;
-use serialize::json::{Json, ToJson, decode, encode};
-use serialize::{Encodable, Decodable, Encoder, Decoder};
+use http::method::{Get, Post, Delete};
+use serialize::base64::{ToBase64, STANDARD};
+use serialize::{json, Encodable, Decodable, Encoder, Decoder};
 
 static BASE_URL: &'static str = "https://api.pushbullet.com/v2/";
 
@@ -75,17 +73,17 @@ impl<S: Decoder<E>, E> Decodable<S, E> for Device {
     fn decode(decoder: &mut S) -> Result<Device, E> {
         decoder.read_struct("root", 0, |d| {
             Ok(Device {
-                app_version: d.read_struct_field("app_version", 0, |d| Decodable::decode(d)).ok(),
+                app_version: try!(d.read_struct_field("app_version", 0, |d| Decodable::decode(d))),
                 created: try!(d.read_struct_field("created", 0, |d| Decodable::decode(d))),
-                modified: d.read_struct_field("modified", 0, |d| Decodable::decode(d)).ok(),
+                modified: try!(d.read_struct_field("modified", 0, |d| Decodable::decode(d))),
                 active: try!(d.read_struct_field("active", 0, |d| Decodable::decode(d))),
                 pushable: try!(d.read_struct_field("pushable", 0, |d| Decodable::decode(d))),
                 iden: try!(d.read_struct_field("iden", 0, |d| Decodable::decode(d))),
-                push_token: d.read_struct_field("push_token", 0, |d| Decodable::decode(d)).ok(),
-                fingerprint: d.read_struct_field("fingerprint", 0, |d| Decodable::decode(d)).ok(),
+                push_token: try!(d.read_struct_field("push_token", 0, |d| Decodable::decode(d))),
+                fingerprint: try!(d.read_struct_field("fingerprint", 0, |d| Decodable::decode(d))),
                 nickname: try!(d.read_struct_field("nickname", 0, |d| Decodable::decode(d))),
-                manufacturer: d.read_struct_field("manufacturer", 0, |d| Decodable::decode(d)).ok(),
-                model: d.read_struct_field("model", 0, |d| Decodable::decode(d)).ok(),
+                manufacturer: try!(d.read_struct_field("manufacturer", 0, |d| Decodable::decode(d))),
+                model: try!(d.read_struct_field("model", 0, |d| Decodable::decode(d))),
                 kind: try!(d.read_struct_field("kind", 0, |d| Decodable::decode(d))),
                 typ: try!(d.read_struct_field("type", 0, |d| Decodable::decode(d))),
             })
@@ -133,11 +131,12 @@ struct Push {
     title: Option<String>,
     body: Option<String>,
 
+    receiver_name: Option<String>,
     receiver_iden: Option<Iden>,
     receiver_email: Option<String>,
     receiver_email_normalized: Option<String>,
 
-    sender_name: String,
+    sender_name: Option<String>,
     sender_email: Option<String>,
     sender_email_normalized: Option<String>,
     sender_iden: Option<Iden>,
@@ -149,27 +148,28 @@ struct Push {
 
 impl<S: Decoder<E>, E> Decodable<S, E> for Push {
     fn decode(decoder: &mut S) -> Result<Push, E> {
-        decoder.read_struct("root", 0, |d| {
+        decoder.read_struct("Push", 0, |d| {
             Ok(Push {
                 iden: try!(d.read_struct_field("iden", 0, |d| Decodable::decode(d))),
                 active: try!(d.read_struct_field("active", 0, |d| Decodable::decode(d))),
                 dismissed: try!(d.read_struct_field("dismissed", 0, |d| Decodable::decode(d))),
                 created: try!(d.read_struct_field("created", 0, |d| Decodable::decode(d))),
-                modified: d.read_struct_field("modified", 0, |d| Decodable::decode(d)).ok(),
+                modified: try!(d.read_struct_field("modified", 0, |d| Decodable::decode(d))),
 
-                title: d.read_struct_field("title", 0, |d| Decodable::decode(d)).ok(),
-                body: d.read_struct_field("body", 0, |d| Decodable::decode(d)).ok(),
+                title: try!(d.read_struct_field("title", 0, |d| Decodable::decode(d))),
+                body: try!(d.read_struct_field("body", 0, |d| Decodable::decode(d))),
 
-                receiver_iden: d.read_struct_field("receiver_iden", 0, |d| Decodable::decode(d)).ok(),
-                receiver_email: d.read_struct_field("receiver_email", 0, |d| Decodable::decode(d)).ok(),
-                receiver_email_normalized: d.read_struct_field("receiver_email_normalized", 0, |d| Decodable::decode(d)).ok(),
+                receiver_name: try!(d.read_struct_field("receiver_name", 0, |d| Decodable::decode(d))),
+                receiver_iden: try!(d.read_struct_field("receiver_iden", 0, |d| Decodable::decode(d))),
+                receiver_email: try!(d.read_struct_field("receiver_email", 0, |d| Decodable::decode(d))),
+                receiver_email_normalized: try!(d.read_struct_field("receiver_email_normalized", 0, |d| Decodable::decode(d))),
 
                 sender_name: try!(d.read_struct_field("sender_name", 0, |d| Decodable::decode(d))),
-                sender_iden: d.read_struct_field("sender_iden", 0, |d| Decodable::decode(d)).ok(),
-                sender_email: d.read_struct_field("sender_email", 0, |d| Decodable::decode(d)).ok(),
-                sender_email_normalized: d.read_struct_field("sender_email_normalized", 0, |d| Decodable::decode(d)).ok(),
+                sender_iden: try!(d.read_struct_field("sender_iden", 0, |d| Decodable::decode(d))),
+                sender_email: try!(d.read_struct_field("sender_email", 0, |d| Decodable::decode(d))),
+                sender_email_normalized: try!(d.read_struct_field("sender_email_normalized", 0, |d| Decodable::decode(d))),
 
-                target_device_iden: d.read_struct_field("target_device_iden", 0, |d| Decodable::decode(d)).ok(),
+                target_device_iden: try!(d.read_struct_field("target_device_iden", 0, |d| Decodable::decode(d))),
 
                 data: match try!(d.read_struct_field("type", 0, |d| d.read_str())).as_slice() {
                     "note" => NotePush,
@@ -178,7 +178,7 @@ impl<S: Decoder<E>, E> Decodable<S, E> for Push {
                         try!(d.read_struct_field("file_name", 0, |d| Decodable::decode(d))),
                         try!(d.read_struct_field("file_type", 0, |d| Decodable::decode(d))),
                         try!(d.read_struct_field("file_url", 0, |d| Decodable::decode(d))),
-                        d.read_struct_field("image_url", 0, |d| Decodable::decode(d)).ok(),
+                        try!(d.read_struct_field("image_url", 0, |d| Decodable::decode(d))),
                         ),
                     "list" => ListPush(try!(d.read_struct_field("items", 0, |d| Decodable::decode(d)))),
                     "address" => AddressPush(try!(d.read_struct_field("address", 0, |d| Decodable::decode(d)))),
@@ -199,38 +199,39 @@ impl<S: Encoder<E>, E> Encodable<S, E> for Push {
             try!(e.emit_struct_field("modified", 4u, |e| self.modified.encode(e)));
             try!(e.emit_struct_field("title", 5u, |e| self.title.encode(e)));
             try!(e.emit_struct_field("body", 6u, |e| self.body.encode(e)));
-            try!(e.emit_struct_field("receiver_iden", 7u, |e| self.receiver_iden.encode(e)));
-            try!(e.emit_struct_field("receiver_email", 8u, |e| self.receiver_email.encode(e)));
-            try!(e.emit_struct_field("receiver_email_normalized", 9u, |e| self.receiver_email_normalized.encode(e)));
-            try!(e.emit_struct_field("sender_name", 10u, |e| self.sender_name.encode(e)));
-            try!(e.emit_struct_field("sender_email", 11u, |e| self.sender_email.encode(e)));
-            try!(e.emit_struct_field("sender_email_normalized", 12u, |e| self.sender_email_normalized.encode(e)));
-            try!(e.emit_struct_field("sender_iden", 13u, |e| self.sender_iden.encode(e)));
-            try!(e.emit_struct_field("target_device_iden", 14u, |e| self.target_device_iden.encode(e)));
+            try!(e.emit_struct_field("receiver_name", 7u, |e| self.receiver_name.encode(e)));
+            try!(e.emit_struct_field("receiver_iden", 8u, |e| self.receiver_iden.encode(e)));
+            try!(e.emit_struct_field("receiver_email", 9u, |e| self.receiver_email.encode(e)));
+            try!(e.emit_struct_field("receiver_email_normalized", 10u, |e| self.receiver_email_normalized.encode(e)));
+            try!(e.emit_struct_field("sender_name", 11u, |e| self.sender_name.encode(e)));
+            try!(e.emit_struct_field("sender_email", 12u, |e| self.sender_email.encode(e)));
+            try!(e.emit_struct_field("sender_email_normalized", 13u, |e| self.sender_email_normalized.encode(e)));
+            try!(e.emit_struct_field("sender_iden", 14u, |e| self.sender_iden.encode(e)));
+            try!(e.emit_struct_field("target_device_iden", 15u, |e| self.target_device_iden.encode(e)));
 
             match self.data {
-                NotePush => try!(e.emit_struct_field("type", 15u, |e| e.emit_str("note"))),
+                NotePush => try!(e.emit_struct_field("type", 16u, |e| e.emit_str("note"))),
                 UrlPush(ref url) => {
-                    try!(e.emit_struct_field("type", 15u, |e| e.emit_str("url")));
-                    try!(e.emit_struct_field("url", 16u, |e| url.encode(e)));
+                    try!(e.emit_struct_field("type", 16u, |e| e.emit_str("url")));
+                    try!(e.emit_struct_field("url", 17u, |e| url.encode(e)));
                 },
                 FilePush(ref name, ref mime, ref url, ref img) => {
-                    try!(e.emit_struct_field("type", 15u, |e| e.emit_str("file")));
-                    try!(e.emit_struct_field("file_name", 16u, |e| name.encode(e)));
-                    try!(e.emit_struct_field("file_type", 17u, |e| mime.encode(e)));
-                    try!(e.emit_struct_field("file_url", 18u, |e| url.encode(e)));
+                    try!(e.emit_struct_field("type", 16u, |e| e.emit_str("file")));
+                    try!(e.emit_struct_field("file_name", 17u, |e| name.encode(e)));
+                    try!(e.emit_struct_field("file_type", 18u, |e| mime.encode(e)));
+                    try!(e.emit_struct_field("file_url", 19u, |e| url.encode(e)));
                     match *img {
-                        Some(ref url) => try!(e.emit_struct_field("image_url", 19u, |e| url.encode(e))),
+                        Some(ref url) => try!(e.emit_struct_field("image_url", 20u, |e| url.encode(e))),
                         None => ()
                     }
                 },
                 ListPush(ref items) => {
-                    try!(e.emit_struct_field("type", 15u, |e| e.emit_str("list")));
-                    try!(e.emit_struct_field("items", 16u, |e| items.encode(e)));
+                    try!(e.emit_struct_field("type", 16u, |e| e.emit_str("list")));
+                    try!(e.emit_struct_field("items", 17u, |e| items.encode(e)));
                 },
                 AddressPush(ref address) => {
-                    try!(e.emit_struct_field("type", 15u, |e| e.emit_str("address")));
-                    try!(e.emit_struct_field("address", 16u, |e| address.encode(e)));
+                    try!(e.emit_struct_field("type", 16u, |e| e.emit_str("address")));
+                    try!(e.emit_struct_field("address", 17u, |e| address.encode(e)));
                 },
             }
 
@@ -239,37 +240,37 @@ impl<S: Encoder<E>, E> Encodable<S, E> for Push {
     }
 }
 
-impl PushBulletObject for Push {
-    fn uri(&self) -> Url {
-        Url::parse(format!("pushes/{}", self.iden).as_slice()).unwrap()
-    }
+//impl PushBulletObject for Push {
+    //fn uri(&self) -> Url {
+        //Url::parse(format!("pushes/{}", self.iden).as_slice()).unwrap()
+    //}
 
-    fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
-}
+    //fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
+//}
 
-impl PushBulletObject for Device {
-    fn uri(&self) -> Url {
-        Url::parse(format!("devices/{}", self.iden).as_slice()).unwrap()
-    }
+//impl PushBulletObject for Device {
+    //fn uri(&self) -> Url {
+        //Url::parse(format!("devices/{}", self.iden).as_slice()).unwrap()
+    //}
 
-    fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
-}
+    //fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
+//}
 
-impl PushBulletObject for Contact {
-    fn uri(&self) -> Url {
-        Url::parse(format!("contacts/{}", self.iden).as_slice()).unwrap()
-    }
+//impl PushBulletObject for Contact {
+    //fn uri(&self) -> Url {
+        //Url::parse(format!("contacts/{}", self.iden).as_slice()).unwrap()
+    //}
 
-    fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
-}
+    //fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
+//}
 
-impl PushBulletObject for Grant {
-    fn uri(&self) -> Url {
-        Url::parse(format!("grants/{}", self.iden).as_slice()).unwrap()
-    }
+//impl PushBulletObject for Grant {
+    //fn uri(&self) -> Url {
+        //Url::parse(format!("grants/{}", self.iden).as_slice()).unwrap()
+    //}
 
-    fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
-}
+    //fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
+//}
 
 #[deriving(Show, PartialEq, Decodable, Encodable)]
 struct ListItem {
@@ -299,5 +300,50 @@ struct Envelope {
 }
 
 #[test]
-fn it_works() {
+fn test_push_encode() {
+    let example = "{
+        \"iden\": \"ubdpj29aOK0sKG\",
+        \"type\": \"note\",
+        \"title\": \"Note Title\",
+        \"body\": \"Note Body\",
+        \"created\": 1399253701.9744401,
+        \"modified\": 1399253701.9746201,
+        \"active\": true,
+        \"dismissed\": false,
+        \"sender_iden\": \"ubd\",
+        \"sender_email\": \"ryan@pushbullet.com\",
+        \"sender_email_normalized\": \"ryan@pushbullet.com\",
+        \"receiver_iden\": \"ubd\",
+        \"receiver_email\": \"ryan@pushbullet.com\",
+        \"receiver_email_normalized\": \"ryan@pushbullet.com\"
+    }";
+    let push: Result<Push, _> = json::decode(example);
+    match push {
+        Ok(ref p) => assert_eq!(*p, Push {
+            iden: "ubdpj29aOK0sKG".to_string(),
+            active: true,
+            dismissed: false,
+            created: 1399253701,
+            modified: Some(1399253701),
+
+            title: Some("Note Title".to_string()),
+            body: Some("Note Body".to_string()),
+
+            receiver_name: None,
+            receiver_iden: Some("ubd".to_string()),
+            receiver_email: Some("ryan@pushbullet.com".to_string()),
+            receiver_email_normalized: Some("ryan@pushbullet.com".to_string()),
+
+            sender_name: None,
+            sender_iden: Some("ubd".to_string()),
+            sender_email: Some("ryan@pushbullet.com".to_string()),
+            sender_email_normalized: Some("ryan@pushbullet.com".to_string()),
+
+            target_device_iden: None,
+
+            data: NotePush,
+        }),
+        Err(e) => fail!("Error: {}", e)
+    }
 }
+

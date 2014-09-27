@@ -32,6 +32,29 @@ trait PushTarget {
 
 trait PushBulletAPI {}
 
+#[deriving(Show, PartialEq, Decodable, Encodable)]
+struct Account {
+    iden: Iden,
+    created: u64,
+    modified: Option<u64>,
+    email: String,
+    email_normalized: String,
+    name: String,
+    image_url: Url,
+    //google_userinfo: {
+        //name:Konstantin Stepanov
+    //},
+    //preferences: {
+        //onboarding:{
+            //app:false,
+            //friends: false,
+            //extension: false
+        //},
+        //social: false
+    //},
+    api_key: String
+}
+
 #[deriving(Show, PartialEq)]
 struct Device {
     app_version: Option<uint>,
@@ -448,6 +471,47 @@ fn test_list_push_decode() {
                 from_str::<ListItem>("Item One").unwrap().checked(),
                 from_str::<ListItem>("Item Two").unwrap()
             ]),
+        }),
+        Err(e) => fail!("Error: {}", e)
+    }
+}
+
+#[test]
+fn test_account_decode() {
+    let example = "{
+        \"iden\": \"udx234acsdc\",
+        \"created\": 1398342586.00574,
+        \"modified\": 1409046718.1501,
+        \"email\": \"me@kstep.me\",
+        \"email_normalized\": \"me@kstep.me\",
+        \"name\": \"Konstantin Stepanov\",
+        \"image_url\": \"https://lh5.googleusercontent.com/photo.jpg\",
+        \"google_userinfo\": {
+            \"name\":\"Konstantin Stepanov\"
+        },
+        \"preferences\": {
+            \"onboarding\":{
+                \"app\":false,
+                \"friends\": false,
+                \"extension\": false
+            },
+            \"social\": false
+        },
+        \"api_key\": \"9aau3q49898u98me3q48u\"
+    }";
+    let account: Result<Account, _> = json::decode(example);
+    match account {
+        Ok(ref a) => assert_eq!(*a, Account {
+            iden: "udx234acsdc".to_string(),
+            created: 1398342586,
+            modified: Some(1409046718),
+            email: "me@kstep.me".to_string(),
+            email_normalized: "me@kstep.me".to_string(),
+            name: "Konstantin Stepanov".to_string(),
+            image_url: Url::parse("https://lh5.googleusercontent.com/photo.jpg").unwrap(),
+            //google_userinfo: GoogleInfo{ name: "Konstantin Stepanov".to_string() },
+            //preferences: Map(...),
+            api_key: "9aau3q49898u98me3q48u".to_string(),
         }),
         Err(e) => fail!("Error: {}", e)
     }

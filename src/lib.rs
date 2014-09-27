@@ -10,6 +10,7 @@ use http::client::RequestWriter;
 use http::method::{Get, Post, Delete};
 use serialize::base64::{ToBase64, STANDARD};
 use serialize::{json, Encodable, Decodable, Encoder, Decoder};
+use std::from_str::FromStr;
 
 static BASE_URL: &'static str = "https://api.pushbullet.com/v2/";
 
@@ -272,10 +273,64 @@ impl<S: Encoder<E>, E> Encodable<S, E> for Push {
     //fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
 //}
 
-#[deriving(Show, PartialEq, Decodable, Encodable)]
-struct ListItem {
-    checked: bool,
-    text: String,
+#[deriving(Show, PartialEq)]
+struct ListItem(bool, String);
+
+impl FromStr for ListItem {
+    fn from_str(s: &str) -> Option<ListItem> {
+        Some(ListItem(false, s.to_string()))
+    }
+}
+
+impl ListItem {
+    fn checked(self) -> ListItem {
+        match self {
+            ListItem(_, s) => ListItem(true, s)
+        }
+    }
+    fn unchecked(self) -> ListItem {
+        match self {
+            ListItem(_, s) => ListItem(false, s)
+        }
+    }
+    fn toggled(self) -> ListItem {
+        match self {
+            ListItem(c, s) => ListItem(!c, s)
+        }
+    }
+    fn to_string(&self) -> String {
+        match *self {
+            ListItem(_, ref s) => s.to_string()
+        }
+    }
+    fn is_checked(&self) -> bool {
+        match *self {
+            ListItem(c, _) => c
+        }
+    }
+}
+
+impl<S: Encoder<E>, E> Encodable<S, E> for ListItem {
+    fn encode(&self, encoder: &mut S) -> Result<(), E> {
+        match *self {
+            ListItem(checked, ref text) => encoder.emit_struct("ListItem", 0, |e| {
+                try!(e.emit_struct_field("checked", 0u, |e| e.emit_bool(checked)));
+                try!(e.emit_struct_field("text", 1u, |e| e.emit_str(text.as_slice())));
+                Ok(())
+            })
+        }
+    }
+}
+
+impl<S: Decoder<E>, E> Decodable<S, E> for ListItem {
+    fn decode(decoder: &mut S) -> Result<ListItem, E> {
+        decoder.read_struct("root", 0, |d| {
+            Ok(ListItem(
+                try!(d.read_struct_field("checked", 0, |d| Decodable::decode(d))),
+                try!(d.read_struct_field("text", 0, |d| Decodable::decode(d)))
+            ))
+        })
+    }
 }
 
 #[deriving(Show, PartialEq)]
@@ -300,7 +355,7 @@ struct Envelope {
 }
 
 #[test]
-fn test_push_encode() {
+fn test_note_push_decode() {
     let example = "{
         \"iden\": \"ubdpj29aOK0sKG\",
         \"type\": \"note\",
@@ -347,3 +402,53 @@ fn test_push_encode() {
     }
 }
 
+#[test]
+fn test_list_push_decode() {
+    let example = "{
+        \"iden\": \"ubdpjAkaGXvUl2\",
+        \"type\": \"list\",
+        \"title\": \"List Title\",
+        \"items\": [{\"checked\": true, \"text\": \"Item One\"}, {\"checked\": false, \"text\": \"Item Two\"}],
+        \"created\": 1411595195.1267679,
+        \"modified\": 1411699878.2501802,
+        \"active\": true,
+        \"dismissed\": false,
+        \"sender_iden\": \"ubd\",
+        \"sender_email\": \"ryan@pushbullet.com\",
+        \"sender_email_normalized\": \"ryan@pushbullet.com\",
+        \"receiver_iden\": \"ubd\",
+        \"receiver_email\": \"ryan@pushbullet.com\",
+        \"receiver_email_normalized\": \"ryan@pushbullet.com\"
+    }";
+    let push: Result<Push, _> = json::decode(example);
+    match push {
+        Ok(ref p) => assert_eq!(*p, Push {
+            iden: "ubdpjAkaGXvUl2".to_string(),
+            active: true,
+            dismissed: false,
+            created: 1411595195,
+            modified: Some(1411699878),
+
+            title: Some("List Title".to_string()),
+            body: None,
+
+            receiver_name: None,
+            receiver_iden: Some("ubd".to_string()),
+            receiver_email: Some("ryan@pushbullet.com".to_string()),
+            receiver_email_normalized: Some("ryan@pushbullet.com".to_string()),
+
+            sender_name: None,
+            sender_iden: Some("ubd".to_string()),
+            sender_email: Some("ryan@pushbullet.com".to_string()),
+            sender_email_normalized: Some("ryan@pushbullet.com".to_string()),
+
+            target_device_iden: None,
+
+            data: ListPush(vec![
+                from_str::<ListItem>("Item One").unwrap().checked(),
+                from_str::<ListItem>("Item Two").unwrap()
+            ]),
+        }),
+        Err(e) => fail!("Error: {}", e)
+    }
+}

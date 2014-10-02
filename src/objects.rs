@@ -7,19 +7,19 @@ use serialize::json;
 
 pub type Iden = String;
 pub type Cursor = String;
+pub type Timestamp = u64;
 
 trait PbObj {
     fn uri(&self) -> String;
     fn collection_uri() -> &'static str { "" }
-    fn unpack<'a>(env: &'a Envelope) -> (&'a [Self], Option<Cursor>);
     fn iden<'a>(&'a self) -> &'a Iden;
 }
 
 #[deriving(Show, PartialEq, Decodable, Encodable)]
 pub struct Account {
     iden: Iden,
-    created: u64,
-    modified: u64,
+    created: Timestamp,
+    modified: Timestamp,
     email: String,
     email_normalized: String,
     name: String,
@@ -43,8 +43,8 @@ pub struct Account {
 #[deriving(Show, PartialEq)]
 pub struct Device {
     app_version: Option<uint>,
-    created: u64,
-    modified: u64,
+    created: Timestamp,
+    modified: Timestamp,
     active: bool,
     pushable: bool,
     iden: Iden,
@@ -102,58 +102,58 @@ impl<S: Decoder<E>, E> Decodable<S, E> for Device {
 
 #[deriving(Encodable, Decodable, Show, PartialEq)]
 pub struct Contact {
-    active: bool,
-    created: u64,
-    modified: u64,
-    email: String,
-    email_normalized: String,
-    iden: Iden,
-    name: String,
-    status: String,
+    pub active: bool,
+    pub created: Timestamp,
+    pub modified: Timestamp,
+    pub email: String,
+    pub email_normalized: String,
+    pub iden: Iden,
+    pub name: String,
+    pub status: String,
 }
 
 #[deriving(Encodable, Decodable, Show, PartialEq)]
 pub struct Grant {
-    iden: Iden,
-    active: bool,
-    created: u64,
-    modified: u64,
-    client: Option<Client>,
+    pub iden: Iden,
+    pub active: bool,
+    pub created: Timestamp,
+    pub modified: Timestamp,
+    pub client: Option<Client>,
 }
 
 #[deriving(Encodable, Decodable, Show, PartialEq)]
 pub struct Client {
-    iden: Iden,
-    image_url: Url,
-    name: String,
-    website_url: Url,
+    pub iden: Iden,
+    pub image_url: Url,
+    pub name: String,
+    pub website_url: Url,
 }
 
 #[deriving(Show, PartialEq)]
 pub struct Push {
-    iden: Iden,
-    active: bool,
-    dismissed: bool,
-    created: u64,
-    modified: u64,
+    pub iden: Iden,
+    pub active: bool,
+    pub dismissed: bool,
+    pub created: Timestamp,
+    pub modified: Timestamp,
 
-    title: Option<String>,
-    body: Option<String>,
+    pub title: Option<String>,
+    pub body: Option<String>,
 
-    receiver_name: Option<String>,
-    receiver_iden: Option<Iden>,
-    receiver_email: Option<String>,
-    receiver_email_normalized: Option<String>,
+    pub receiver_name: Option<String>,
+    pub receiver_iden: Option<Iden>,
+    pub receiver_email: Option<String>,
+    pub receiver_email_normalized: Option<String>,
 
-    sender_name: Option<String>,
-    sender_email: Option<String>,
-    sender_email_normalized: Option<String>,
-    sender_iden: Option<Iden>,
+    pub sender_name: Option<String>,
+    pub sender_email: Option<String>,
+    pub sender_email_normalized: Option<String>,
+    pub sender_iden: Option<Iden>,
 
-    source_device_iden: Option<Iden>,
-    target_device_iden: Option<Iden>,
+    pub source_device_iden: Option<Iden>,
+    pub target_device_iden: Option<Iden>,
 
-    data: PushData,
+    pub data: PushData,
 }
 
 impl<S: Decoder<E>, E> Decodable<S, E> for Push {
@@ -372,17 +372,62 @@ impl<S: Decoder<E>, E> Decodable<S, E> for PushData {
 }
 
 #[deriving(Show, PartialEq, Decodable)]
+pub struct Channel {
+    pub iden: Iden,
+    pub active: bool,
+    pub created: Timestamp,
+    pub modified: Timestamp,
+    pub tag: String,
+    pub name: String,
+    pub description: String,
+    pub image_url: Option<Url>,
+    pub website_url: Option<Url>,
+    pub feed_url: Option<Url>,
+}
+
+impl PbObj for Channel {
+    fn uri(&self) -> String { format!("channels/{}", self.iden) }
+    fn collection_uri() -> &'static str { "channels" }
+    fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
+}
+
+#[deriving(Show, PartialEq, Decodable)]
+pub struct ChannelInfo {
+    pub iden: Iden,
+    pub tag: String,
+    pub name: String,
+    pub description: String,
+    pub image_url: Option<Url>,
+    pub website_url: Option<Url>,
+}
+
+#[deriving(Show, PartialEq, Decodable)]
+pub struct Subscription {
+    pub iden: Iden,
+    pub active: bool,
+    pub created: Timestamp,
+    pub modified: Timestamp,
+    pub channel: Option<Channel>,
+}
+
+impl PbObj for Subscription {
+    fn uri(&self) -> String { format!("subscriptions/{}", self.iden) }
+    fn collection_uri() -> &'static str { "subscriptions" }
+    fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
+}
+
+#[deriving(Show, PartialEq, Decodable)]
 pub struct Envelope {
     //aliases: Vec<Alias>,
-    //channels: Vec<Channel>,
-    //clients: Vec<Client>,
+    pub channels: Option<Vec<Channel>>,
+    pub clients: Option<Vec<Client>>,
     pub devices: Option<Vec<Device>>,
     pub grants: Option<Vec<Grant>>,
     pub pushes: Option<Vec<Push>>,
     pub contacts: Option<Vec<Contact>>,
-    //subscriptions: Vec<Subscription>,
+    pub subscriptions: Vec<Subscription>,
     pub cursor: Option<Cursor>,
-    pub error: Option<PbError>,
+    pub error: Option<Error>,
 }
 
 impl Envelope {
@@ -398,13 +443,13 @@ impl Envelope {
             None => Some(self)
         }
     }
-    pub fn err<'a>(&'a self) -> Option<&'a PbError> {
+    pub fn err<'a>(&'a self) -> Option<&'a Error> {
         match self.error {
             Some(ref err) => Some(err),
             None => None
         }
     }
-    pub fn result<'a>(&'a self) -> Result<&'a Envelope, &'a PbError> {
+    pub fn result<'a>(&'a self) -> Result<&'a Envelope, &'a Error> {
         match self.error {
             Some(ref err) => Err(err),
             None => Ok(self)
@@ -413,16 +458,16 @@ impl Envelope {
 }
 
 #[deriving(Show, PartialEq)]
-pub struct PbError {
+pub struct Error {
     message: String,
     typ: String,
     cat: String,
 }
 
-impl<S: Decoder<E>, E> Decodable<S, E> for PbError {
-    fn decode(decoder: &mut S) -> Result<PbError, E> {
-        decoder.read_struct("PbError", 0, |d| {
-            Ok(PbError {
+impl<S: Decoder<E>, E> Decodable<S, E> for Error {
+    fn decode(decoder: &mut S) -> Result<Error, E> {
+        decoder.read_struct("Error", 0, |d| {
+            Ok(Error {
                 message: try!(d.read_struct_field("message", 0, |d| Decodable::decode(d))),
                 typ: try!(d.read_struct_field("type", 0, |d| Decodable::decode(d))),
                 cat: try!(d.read_struct_field("cat", 0, |d| Decodable::decode(d))),
@@ -476,7 +521,7 @@ fn test_note_push_decode() {
 
             data: NotePush,
         }),
-        Err(e) => fail!("PbError: {}", e)
+        Err(e) => fail!("Error: {}", e)
     }
 }
 
@@ -528,7 +573,7 @@ fn test_list_push_decode() {
                 from_str::<ListItem>("Item Two").unwrap()
             ]),
         }),
-        Err(e) => fail!("PbError: {}", e)
+        Err(e) => fail!("Error: {}", e)
     }
 }
 
@@ -565,7 +610,7 @@ fn test_account_decode() {
             //preferences: Map(...),
             api_key: "9aau3q49898u98me3q48u".to_string(),
         }),
-        Err(e) => fail!("PbError: {}", e)
+        Err(e) => fail!("Error: {}", e)
     }
 }
 
@@ -582,7 +627,7 @@ fn test_decode_err_result() {
     match result {
         Ok(ref env) => {
             assert_eq!(*env, Envelope {
-                error: Some(PbError {
+                error: Some(Error {
                     message: "The resource could not be found.".to_string(),
                     typ: "invalid_request".to_string(),
                     cat: "~(=^‥^)".to_string(),

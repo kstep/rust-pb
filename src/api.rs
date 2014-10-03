@@ -8,6 +8,7 @@ use serialize::json;
 use url::Url;
 use std::io;
 use std::io::{standard_error, IoResult, IoError};
+use std::str::from_utf8;
 use objects::{Envelope, PbObj, Cursor};
 use messages::PbMsg;
 
@@ -19,7 +20,7 @@ pub struct PbAPI {
 
 impl PbAPI {
     fn make_writer(&self, method: Method, url: &str) -> IoResult<RequestWriter> {
-        let writer = try!(RequestWriter::new(method, match Url::parse(url) {
+        let mut writer = try!(RequestWriter::new(method, match Url::parse(url) {
             Ok(u) => u,
             Err(e) => return Err(standard_error(io::OtherIoError))
         }));
@@ -31,41 +32,42 @@ impl PbAPI {
         PbAPI{ api_key: api_key.to_string() }
     }
 
-    pub fn post<S: Encoder<E>, E, T: PbMsg + Encodable<S, E>>(&mut self, msg: &T) -> IoResult<PbObj> {
-        let url = format!("{}{}", BASE_URL, PbMsg::uri());
-        let writer = try!(self.make_writer(Post, url.as_slice()));
-        let data = json::encode(msg).into_bytes();
+    //pub fn post<S: Encoder<E>, E, T: PbMsg + Encodable<S, E>>(&mut self, msg: &T) -> IoResult<PbObj> {
+        //let url = format!("{}{}", BASE_URL, PbMsg::uri());
+        //let writer = try!(self.make_writer(Post, url.as_slice()));
+        //let data = json::encode(msg).into_bytes();
 
-        writer.headers.content_length = Some(data.len());
-        writer.headers.content_type = Some(MediaType::new("application".to_string(), "json".to_string(), Vec::new()));
-        writer.write(data.as_slice());
+        //writer.headers.content_length = Some(data.len());
+        //writer.headers.content_type = Some(MediaType::new("application".to_string(), "json".to_string(), Vec::new()));
+        //writer.write(data.as_slice());
 
-        match writer.read_response() {
-            Ok(resp) => Ok(match json::decode(String::from_utf8(try!(resp.read_to_end()))) {
-                Ok(r) => r,
-                Err(e) => return Err(standard_error(io::InvalidInput))
-            }),
-            Err((req, err)) => Err(err)
-        }
-    }
+        //match writer.read_response() {
+            //Ok(resp) => Ok(match json::decode(String::from_utf8(try!(resp.read_to_end()))) {
+                //Ok(r) => r,
+                //Err(e) => return Err(standard_error(io::InvalidInput))
+            //}),
+            //Err((req, err)) => Err(err)
+        //}
+    //}
 
-    pub fn get<O: PbObj>(&mut self, limit: uint, cursor: Option<Cursor>) -> IoResult<(Vec<O>, Option<Cursor>)> {
-        let url = format!("{}{}?limit={}&cursor={}", BASE_URL, PbObj::collection_uri(), limit, cursor);
+    pub fn get(&mut self, path: &str, params: Vec<(&str, &str)>) -> IoResult<Envelope> {
+        let url = format!("{}{}?{}", BASE_URL, path, params.iter().map(|&(k, v)| format!("{}={}&", k, v)).fold("".to_string(), |acc, item| acc + item));
         let writer = try!(self.make_writer(Get, url.as_slice()));
 
         match writer.read_response() {
-            Ok(resp) => {
-                let envelope: Envelope = match json::decode(String::from_utf8_lossy(try!(resp.read_to_end()))) {
-                    Ok(e) => e,
-                    Err(err) => return Err(standard_error(io::InvalidInput))
+            Ok(ref mut resp) => {
+                let envelope: Envelope = match from_utf8(try!(resp.read_to_end()).as_slice()).map(|v| json::decode(v)) {
+                    Some(Ok(e)) => e,
+                    Some(Err(err)) => return Err(standard_error(io::InvalidInput)),
+                    None => return Err(standard_error(io::OtherIoError)),
                 };
 
-                match envelope.err() {
+                match envelope.error {
                     Some(..) => return Err(standard_error(io::OtherIoError)),
                     _ => ()
                 }
 
-                Ok(PbObj::unpack(&envelope))
+                Ok(envelope)
             },
             Err((req, err)) => Err(err)
         }

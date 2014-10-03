@@ -9,7 +9,7 @@ pub type Iden = String;
 pub type Cursor = String;
 pub type Timestamp = u64;
 
-trait PbObj {
+pub trait PbObj {
     fn uri(&self) -> String;
     fn collection_uri() -> &'static str { "" }
     fn iden<'a>(&'a self) -> &'a Iden;
@@ -220,36 +220,24 @@ impl PbObj for Push {
     fn uri(&self) -> String { format!("pushes/{}", self.iden) }
     fn collection_uri() -> &'static str { "pushes" }
     fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
-    fn unpack<'a>(env: &'a Envelope) -> (&'a [Push], Option<Cursor>) {
-        (env.pushes.map(|c| c.as_slice()).unwrap_or_else(|| &[]), env.cursor)
-    }
 }
 
 impl PbObj for Device {
     fn uri(&self) -> String { format!("devices/{}", self.iden) }
     fn collection_uri() -> &'static str { "devices" }
     fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
-    fn unpack<'a>(env: &'a Envelope) -> (&'a [Device], Option<Cursor>) {
-        (env.devices.map(|c| c.as_slice()).unwrap_or_else(|| &[]), env.cursor)
-    }
 }
 
 impl PbObj for Contact {
     fn uri(&self) -> String { format!("contacts/{}", self.iden) }
     fn collection_uri() -> &'static str { "contacts" }
     fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
-    fn unpack<'a>(env: &'a Envelope) -> (&'a [Contact], Option<Cursor>) {
-        (env.contacts.map(|c| c.as_slice()).unwrap_or_else(|| &[]), env.cursor)
-    }
 }
 
 impl PbObj for Grant {
     fn uri(&self) -> String { format!("grants/{}", self.iden) }
     fn collection_uri() -> &'static str { "grants" }
     fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
-    fn unpack<'a>(env: &'a Envelope) -> (&'a [Grant], Option<Cursor>) {
-        (env.grants.map(|c| c.as_slice()).unwrap_or_else(|| &[]), env.cursor)
-    }
 }
 
 #[deriving(Show, PartialEq)]
@@ -425,7 +413,7 @@ pub struct Envelope {
     pub grants: Option<Vec<Grant>>,
     pub pushes: Option<Vec<Push>>,
     pub contacts: Option<Vec<Contact>>,
-    pub subscriptions: Vec<Subscription>,
+    pub subscriptions: Option<Vec<Subscription>>,
     pub cursor: Option<Cursor>,
     pub error: Option<Error>,
 }
@@ -635,6 +623,9 @@ fn test_decode_err_result() {
                 devices: None,
                 pushes: None,
                 contacts: None,
+                channels: None,
+                subscriptions: None,
+                clients: None,
                 grants: None,
                 cursor: None
             });
@@ -665,6 +656,9 @@ fn test_decode_ok_result() {
                 grants: Some(vec![]),
                 pushes: Some(vec![]),
                 contacts: Some(vec![]),
+                channels: None,
+                clients: None,
+                subscriptions: None,
                 error: None,
                 cursor: None
             })

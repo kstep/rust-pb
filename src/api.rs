@@ -49,7 +49,7 @@ impl PbAPI {
         //}
     //}
 
-    pub fn get(&mut self, path: &str, params: Vec<(&str, &str)>) -> Result<Envelope, String> {
+    fn get(&self, path: &str, params: Vec<(&str, &str)>) -> Result<Envelope, String> {
         let url = format!("{}{}?{}", BASE_URL, path, params.iter().map(|&(k, v)| format!("{}={}&", k, v)).fold("".to_string(), |acc, item| acc + item));
         let writer = try!(self.make_writer(Get, url.as_slice()).map_err(|e| format!("{}", e)));
 
@@ -80,8 +80,21 @@ macro_rules! map {
 }
 
 #[test]
-fn test_get_devices() {
-    let mut api = PbAPI::new("XXXXXXX");
-    let result = api.get("pushes", map![limit -> "10"]);
-    assert_eq!(result, Ok(Envelope::new()));
+fn test_get_objects() {
+    let api = PbAPI::new("XXXXXXX");
+    for obj in vec!["pushes", "devices"].iter() {
+        let result = api.get(*obj, map![limit -> "10"]);
+        match result {
+            Ok(env) => {
+                match env.pushes {
+                    None => fail!("{} missing", obj),
+                    Some(ref pushes) => {
+                        assert!(pushes.len() >= 0);
+                        assert!(pushes.len() <= 10);
+                    }
+                }
+            },
+            Err(e) => fail!("error: {}", e)
+        }
+    }
 }

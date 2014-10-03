@@ -5,6 +5,8 @@
 #![crate_type = "dylib"]
 #![crate_type = "rlib"]
 
+#![feature(macro_rules)]
+
 extern crate http;
 extern crate websocket;
 extern crate url;

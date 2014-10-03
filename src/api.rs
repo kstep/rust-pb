@@ -1,4 +1,3 @@
-
 use http::client::RequestWriter;
 use http::method::{Method, Get, Post, Delete};
 use http::headers::content_type::MediaType;
@@ -50,27 +49,39 @@ impl PbAPI {
         //}
     //}
 
-    pub fn get(&mut self, path: &str, params: Vec<(&str, &str)>) -> IoResult<Envelope> {
+    pub fn get(&mut self, path: &str, params: Vec<(&str, &str)>) -> Result<Envelope, String> {
         let url = format!("{}{}?{}", BASE_URL, path, params.iter().map(|&(k, v)| format!("{}={}&", k, v)).fold("".to_string(), |acc, item| acc + item));
-        let writer = try!(self.make_writer(Get, url.as_slice()));
+        let writer = try!(self.make_writer(Get, url.as_slice()).map_err(|e| format!("{}", e)));
 
         match writer.read_response() {
             Ok(ref mut resp) => {
-                let envelope: Envelope = match from_utf8(try!(resp.read_to_end()).as_slice()).map(|v| json::decode(v)) {
+                let envelope: Envelope = match from_utf8(try!(resp.read_to_end().map_err(|e| format!("{}", e))).as_slice()).map(|v| json::decode(v)) {
                     Some(Ok(e)) => e,
-                    Some(Err(err)) => return Err(standard_error(io::InvalidInput)),
-                    None => return Err(standard_error(io::OtherIoError)),
+                    Some(Err(err)) => return Err(format!("{}", err)),
+                    None => return Err("invalid UTF-8".to_string())
                 };
 
-                match envelope.error {
-                    Some(..) => return Err(standard_error(io::OtherIoError)),
-                    _ => ()
-                }
+                //match envelope.error {
+                    //Some(..) => return Err(format!("{}", envelope.error)),
+                    //_ => ()
+                //}
 
                 Ok(envelope)
             },
-            Err((req, err)) => Err(err)
+            Err((req, err)) => Err(format!("{}", err))
         }
     }
 }
 
+macro_rules! map {
+    [$($name:ident -> $value:expr),*] => {
+        vec![$((stringify!($name), $value)),*]
+    }
+}
+
+#[test]
+fn test_get_devices() {
+    let mut api = PbAPI::new("XXXXXXX");
+    let result = api.get("pushes", map![limit -> "10"]);
+    assert_eq!(result, Ok(Envelope::new()));
+}

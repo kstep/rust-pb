@@ -306,16 +306,22 @@ impl<S: Decoder<E>, E> Decodable<S, E> for ListItem {
 
 #[deriving(Show, PartialEq)]
 pub enum PushData {
+    EmptyPush,
     NotePush,
     UrlPush(Url),
     FilePush(String, String, Url, Option<Url>),  // name, type, url, image
     ListPush(Vec<ListItem>),
     AddressPush(String),
+    DismissalPush,
+    MirrorPush,
 }
 
 impl<S: Encoder<E>, E> Encodable<S, E> for PushData {
     fn encode(&self, encoder: &mut S) -> Result<(), E> {
         match *self {
+            EmptyPush => (),
+            MirrorPush => try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("mirror"))),
+            DismissalPush => try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("dismissal"))),
             NotePush => try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("note"))),
             UrlPush(ref url) => {
                 try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("url")));
@@ -343,18 +349,25 @@ impl<S: Encoder<E>, E> Encodable<S, E> for PushData {
 
 impl<S: Decoder<E>, E> Decodable<S, E> for PushData {
     fn decode(decoder: &mut S) -> Result<PushData, E> {
-        Ok(match try!(decoder.read_struct_field("type", 0, |d| d.read_str())).as_slice() {
-            "note" => NotePush,
-            "link" => UrlPush(try!(decoder.read_struct_field("url", 0, |d| Decodable::decode(d)))),
-            "file" => FilePush(
-                try!(decoder.read_struct_field("file_name", 0, |d| Decodable::decode(d))),
-                try!(decoder.read_struct_field("file_type", 0, |d| Decodable::decode(d))),
-                try!(decoder.read_struct_field("file_url", 0, |d| Decodable::decode(d))),
-                try!(decoder.read_struct_field("image_url", 0, |d| Decodable::decode(d))),
-                ),
-            "list" => ListPush(try!(decoder.read_struct_field("items", 0, |d| Decodable::decode(d)))),
-            "address" => AddressPush(try!(decoder.read_struct_field("address", 0, |d| Decodable::decode(d)))),
-            typ @ _ => return Err(decoder.error(format!("Unknown type: {}", typ).as_slice()))
+        let typ: Option<String> = try!(decoder.read_struct_field("type", 0, |d| d.read_option(|d, b| if b { d.read_str().map(|v| Some(v)) } else { Ok(None) })));
+
+        Ok(match typ {
+            Some(ref t) => match t.as_slice() {
+                "note" => NotePush,
+                "link" => UrlPush(try!(decoder.read_struct_field("url", 0, |d| Decodable::decode(d)))),
+                "file" => FilePush(
+                    try!(decoder.read_struct_field("file_name", 0, |d| Decodable::decode(d))),
+                    try!(decoder.read_struct_field("file_type", 0, |d| Decodable::decode(d))),
+                    try!(decoder.read_struct_field("file_url", 0, |d| Decodable::decode(d))),
+                    try!(decoder.read_struct_field("image_url", 0, |d| Decodable::decode(d))),
+                    ),
+                "list" => ListPush(try!(decoder.read_struct_field("items", 0, |d| Decodable::decode(d)))),
+                "address" => AddressPush(try!(decoder.read_struct_field("address", 0, |d| Decodable::decode(d)))),
+                "mirror" => MirrorPush,
+                "dismissal" => DismissalPush,
+                typ @ _ => return Err(decoder.error(format!("Unknown type: {}", typ).as_slice()))
+            },
+            _ => EmptyPush
         })
     }
 }
@@ -419,6 +432,19 @@ pub struct Envelope {
 }
 
 impl Envelope {
+    pub fn new() -> Envelope {
+        Envelope {
+            channels: None,
+            clients: None,
+            devices: None,
+            grants: None,
+            pushes: None,
+            contacts: None,
+            subscriptions: None,
+            cursor: None,
+            error: None,
+        }
+    }
     pub fn is_ok(&self) -> bool {
         self.error.is_none()
     }

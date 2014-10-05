@@ -82,7 +82,7 @@ macro_rules! map {
 #[test]
 fn test_get_objects() {
     let api = PbAPI::new("XXXXXXX");
-    for obj in vec!["pushes", "devices"].iter() {
+    for obj in vec!["pushes", "devices", "contacts", "channels", "clients", "grants", "subscriptions"].iter() {
         let result = api.get(*obj, map![limit -> "10"]);
         match result {
             Ok(env) => {
@@ -96,5 +96,16 @@ fn test_get_objects() {
             },
             Err(e) => fail!("error: {}", e)
         }
+    }
+}
+
+#[test]
+fn test_error() {
+    let api = PbAPI::new("XXXXXXX");
+    let result = api.get("invalid_object", map![]);
+    match result {
+        Ok(env) => {
+        },
+        Err(e) => fail!("error: {}", e)
     }
 }

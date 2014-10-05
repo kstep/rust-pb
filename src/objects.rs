@@ -408,7 +408,7 @@ pub struct Subscription {
     pub active: bool,
     pub created: Timestamp,
     pub modified: Timestamp,
-    pub channel: Option<Channel>,
+    pub channel: Option<ChannelInfo>,
 }
 
 impl PbObj for Subscription {

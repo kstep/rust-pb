@@ -73,7 +73,7 @@ impl PbAPI {
     }
 }
 
-macro_rules! map {
+macro_rules! qs {
     [$($name:ident -> $value:expr),*] => {
         vec![$((stringify!($name), $value)),*]
     }
@@ -83,7 +83,7 @@ macro_rules! map {
 fn test_get_objects() {
     let api = PbAPI::new("XXXXXXX");
     for obj in vec!["pushes", "devices", "contacts", "channels", "clients", "grants", "subscriptions"].iter() {
-        let result = api.get(*obj, map![limit -> "10"]);
+        let result = api.get(*obj, qs![limit -> "10"]);
         match result {
             Ok(env) => {
                 match env.pushes {
@@ -102,7 +102,7 @@ fn test_get_objects() {
 #[test]
 fn test_error() {
     let api = PbAPI::new("XXXXXXX");
-    let result = api.get("invalid_object", map![]);
+    let result = api.get("invalid_object", qs![]);
     match result {
         Ok(env) => {
         },

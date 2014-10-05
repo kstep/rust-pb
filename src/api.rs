@@ -94,7 +94,7 @@ fn test_get_objects() {
                     }
                 }
             },
-            Err(e) => fail!("error: {}", e)
+            Err(e) => fail!("error for {}: {}", obj, e)
         }
     }
 }

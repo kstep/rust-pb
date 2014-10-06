@@ -1,13 +1,12 @@
 
 use serialize::{Encodable, Encoder};
 use objects::{Iden, PushData};
-use url::Url;
 
 #[cfg(test)]
 use serialize::json;
 
 #[cfg(test)]
-use objects::{Push, NotePush};
+use objects::NotePush;
 
 pub trait PbMsg {
     fn uri() -> &'static str;

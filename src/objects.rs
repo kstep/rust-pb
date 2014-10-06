@@ -9,10 +9,8 @@ pub type Iden = String;
 pub type Cursor = String;
 pub type Timestamp = u64;
 
-pub trait PbObj {
+pub trait PbObj : Sized {
     fn uri(&self) -> String;
-    fn collection_uri() -> &'static str { "" }
-    fn iden<'a>(&'a self) -> &'a Iden;
 }
 
 #[deriving(Show, PartialEq, Decodable, Encodable)]
@@ -152,6 +150,7 @@ pub struct Push {
 
     pub source_device_iden: Option<Iden>,
     pub target_device_iden: Option<Iden>,
+    pub channel_iden: Option<Iden>,
 
     pub data: PushData,
 }
@@ -181,6 +180,7 @@ impl<S: Decoder<E>, E> Decodable<S, E> for Push {
 
                 source_device_iden: try!(d.read_struct_field("source_device_iden", 0, |d| Decodable::decode(d))),
                 target_device_iden: try!(d.read_struct_field("target_device_iden", 0, |d| Decodable::decode(d))),
+                channel_iden: try!(d.read_struct_field("channel_iden", 0, |d| Decodable::decode(d))),
 
                 data: try!(Decodable::decode(d))
             })
@@ -218,26 +218,18 @@ impl<S: Encoder<E>, E> Encodable<S, E> for Push {
 
 impl PbObj for Push {
     fn uri(&self) -> String { format!("pushes/{}", self.iden) }
-    fn collection_uri() -> &'static str { "pushes" }
-    fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
 }
 
 impl PbObj for Device {
     fn uri(&self) -> String { format!("devices/{}", self.iden) }
-    fn collection_uri() -> &'static str { "devices" }
-    fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
 }
 
 impl PbObj for Contact {
     fn uri(&self) -> String { format!("contacts/{}", self.iden) }
-    fn collection_uri() -> &'static str { "contacts" }
-    fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
 }
 
 impl PbObj for Grant {
     fn uri(&self) -> String { format!("grants/{}", self.iden) }
-    fn collection_uri() -> &'static str { "grants" }
-    fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
 }
 
 #[deriving(Show, PartialEq)]
@@ -308,7 +300,7 @@ impl<S: Decoder<E>, E> Decodable<S, E> for ListItem {
 pub enum PushData {
     EmptyPush,
     NotePush,
-    UrlPush(Url),
+    UrlPush(Option<Url>),
     FilePush(String, String, Url, Option<Url>),  // name, type, url, image
     ListPush(Vec<ListItem>),
     AddressPush(String),
@@ -388,8 +380,6 @@ pub struct Channel {
 
 impl PbObj for Channel {
     fn uri(&self) -> String { format!("channels/{}", self.iden) }
-    fn collection_uri() -> &'static str { "channels" }
-    fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
 }
 
 #[deriving(Show, PartialEq, Decodable)]
@@ -413,8 +403,6 @@ pub struct Subscription {
 
 impl PbObj for Subscription {
     fn uri(&self) -> String { format!("subscriptions/{}", self.iden) }
-    fn collection_uri() -> &'static str { "subscriptions" }
-    fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
 }
 
 #[deriving(Show, PartialEq, Decodable)]
@@ -532,6 +520,7 @@ fn test_note_push_decode() {
 
             target_device_iden: None,
             source_device_iden: None,
+            channel_iden: None,
 
             data: NotePush,
         }),
@@ -581,6 +570,7 @@ fn test_list_push_decode() {
 
             source_device_iden: None,
             target_device_iden: None,
+            channel_iden: None,
 
             data: ListPush(vec![
                 from_str::<ListItem>("Item One").unwrap().checked(),

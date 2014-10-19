@@ -123,7 +123,7 @@ impl PbAPI {
 
 #[test]
 fn test_get_objects() {
-    let api = PbAPI::new(env!("PB_API_KEY"));
+    let api = PbAPI::new(option_env!("PB_API_KEY").unwrap());
     let result = api.loadn::<Push>(10);
     match result {
         Ok(env) => {
@@ -140,7 +140,7 @@ fn test_get_objects() {
 
 #[test]
 fn test_delete() {
-    let api = PbAPI::new(env!("PB_API_KEY"));
+    let api = PbAPI::new(option_env!("PB_API_KEY").unwrap());
     let result = api.remove::<Push>("123".to_string());
     assert_eq!(result, Ok(()));
 }

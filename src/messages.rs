@@ -9,7 +9,7 @@ use serialize::json;
 use objects::NotePush;
 
 pub trait PbMsg {
-    fn uri() -> &'static str;
+    type Obj;
 }
 
 #[deriving(PartialEq, Show)]
@@ -31,7 +31,7 @@ pub struct PushMsg {
 }
 
 impl PbMsg for PushMsg {
-    fn uri() -> &'static str { "pushes" }
+    type Obj = super::objects::Push;
 }
 
 impl<S: Encoder<E>, E> Encodable<S, E> for PushMsg {
@@ -59,7 +59,7 @@ pub struct DeviceMsg {
 }
 
 impl PbMsg for DeviceMsg {
-    fn uri() -> &'static str { "devices" }
+    type Obj = super::objects::Device;
 }
 
 impl<S:Encoder<E>, E> Encodable<S, E> for DeviceMsg {
@@ -79,7 +79,7 @@ pub struct ContactMsg {
 }
 
 impl PbMsg for ContactMsg {
-    fn uri() -> &'static str { "contacts" }
+    type Obj = super::objects::Contact;
 }
 
 #[test]

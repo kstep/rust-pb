@@ -10,7 +10,8 @@ pub type Cursor = String;
 pub type Timestamp = u64;
 
 pub trait PbObj : Sized {
-    fn uri(&self) -> String;
+    //fn uri(&self) -> String { format!("{}/{}", PbObj::root_uri(None::<Self>), self.iden()) }
+    fn root_uri(_: Option<Self>) -> &'static str;
 }
 
 #[deriving(Show, PartialEq, Decodable, Encodable)]
@@ -217,19 +218,19 @@ impl<S: Encoder<E>, E> Encodable<S, E> for Push {
 }
 
 impl PbObj for Push {
-    fn uri(&self) -> String { format!("pushes/{}", self.iden) }
+    fn root_uri(_: Option<Push>) -> &'static str { "pushes" }
 }
 
 impl PbObj for Device {
-    fn uri(&self) -> String { format!("devices/{}", self.iden) }
+    fn root_uri(_: Option<Device>) -> &'static str { "devices" }
 }
 
 impl PbObj for Contact {
-    fn uri(&self) -> String { format!("contacts/{}", self.iden) }
+    fn root_uri(_: Option<Contact>) -> &'static str { "contacts" }
 }
 
 impl PbObj for Grant {
-    fn uri(&self) -> String { format!("grants/{}", self.iden) }
+    fn root_uri(_: Option<Grant>) -> &'static str { "grants" }
 }
 
 #[deriving(Show, PartialEq)]
@@ -379,7 +380,7 @@ pub struct Channel {
 }
 
 impl PbObj for Channel {
-    fn uri(&self) -> String { format!("channels/{}", self.iden) }
+    fn root_uri(_: Option<Channel>) -> &'static str { "channels" }
 }
 
 #[deriving(Show, PartialEq, Decodable)]
@@ -402,7 +403,7 @@ pub struct Subscription {
 }
 
 impl PbObj for Subscription {
-    fn uri(&self) -> String { format!("subscriptions/{}", self.iden) }
+    fn root_uri(_: Option<Subscription>) -> &'static str { "subscriptions" }
 }
 
 #[deriving(Show, PartialEq, Decodable)]

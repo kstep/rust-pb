@@ -7,9 +7,12 @@ use url::Url;
 use std::io;
 use std::io::{standard_error, IoResult, IoError};
 use std::str::from_utf8;
-use objects::{Envelope, Cursor, Timestamp, Error, PbObj, Iden, Push};
+use objects::{Envelope, Cursor, Timestamp, Error, PbObj, Iden};
 use messages::PbMsg;
 use serialize::{Encodable, Decodable, Encoder, Decoder};
+
+#[cfg(test)]
+use objects::{Push, Device, Subscription, Grant, Client, Channel, Contact};
 
 static BASE_URL: &'static str = "https://api.pushbullet.com/v2/";
 
@@ -79,13 +82,15 @@ impl PbAPI {
         }
     }
 
-    pub fn save<'a, T: PbMsg, R: PbObj>(&self, obj: &str, msg: &T) -> IoResult<R>
+    // Eventually (when RFC 195 is completed) only T: PbMsg (PbObj) type parameter will be needed,
+    // and T::Obj will be used and the second type.
+    pub fn save<'a, R: PbObj, T: PbMsg>(&self, msg: &T) -> IoResult<R>
         where T: Encodable<json::Encoder<'a>, IoError>, R: Decodable<json::Decoder, json::DecoderError> {
-        self.post(obj, json::encode(msg).as_slice()).map(|v| json::decode(v.as_slice()).unwrap())
+        self.post(PbObj::root_uri(None::<R>), json::encode(msg).as_slice()).map(|v| json::decode(v.as_slice()).unwrap())
     }
 
-    pub fn remove(&self, obj: &str, iden: Iden) -> IoResult<()> {
-        self.delete(format!("{}/{}", obj, iden).as_slice())
+    pub fn remove<O: PbObj>(&self, iden: Iden) -> IoResult<()> {
+        self.delete(format!("{}/{}", PbObj::root_uri(None::<O>), iden).as_slice())
     }
 
     #[inline] fn _load(&self, obj: &str, limit: Option<uint>, since: Option<Timestamp>, cursor: Option<Cursor>) -> IoResult<Envelope> {
@@ -102,59 +107,41 @@ impl PbAPI {
         }
     }
 
-    pub fn load_by_iden<R: PbObj>(&self, obj: &str, iden: Iden) -> IoResult<R> 
+    pub fn load_by_iden<R: PbObj>(&self, iden: Iden) -> IoResult<R>
         where R: Decodable<json::Decoder, json::DecoderError> {
-        self.get(format!("{}/{}", obj, iden).as_slice(), &[]).map(|v| json::decode(v.as_slice()).unwrap())
+        self.get(format!("{}/{}", PbObj::root_uri(None::<R>), iden).as_slice(), &[]).map(|v| json::decode(v.as_slice()).unwrap())
     }
 
-    pub fn load_since(&self, obj: &str, since: Timestamp) -> IoResult<Envelope> { self._load(obj, None, Some(since), None) }
-    pub fn load_from(&self, obj: &str, cursor: Cursor) -> IoResult<Envelope> { self._load(obj, None, None, Some(cursor)) }
-    pub fn load(&self, obj: &str) -> IoResult<Envelope> { self._load(obj, None, None, None) }
+    pub fn load_since<R: PbObj>(&self, since: Timestamp) -> IoResult<Envelope> { self._load(PbObj::root_uri(None::<R>), None, Some(since), None) }
+    pub fn load_from<R: PbObj>(&self, cursor: Cursor) -> IoResult<Envelope> { self._load(PbObj::root_uri(None::<R>), None, None, Some(cursor)) }
+    pub fn load<R: PbObj>(&self) -> IoResult<Envelope> { self._load(PbObj::root_uri(None::<R>), None, None, None) }
 
-    pub fn loadn(&self, obj: &str, limit: uint) -> IoResult<Envelope> { self._load(obj, Some(limit), None, None) }
-    pub fn loadn_from(&self, obj: &str, limit: uint, cursor: Cursor) -> IoResult<Envelope> { self._load(obj, Some(limit), None, Some(cursor)) }
-    pub fn loadn_since(&self, obj: &str, limit: uint, since: Timestamp) -> IoResult<Envelope> { self._load(obj, Some(limit), Some(since), None) }
+    pub fn loadn<R: PbObj>(&self, limit: uint) -> IoResult<Envelope> { self._load(PbObj::root_uri(None::<R>), Some(limit), None, None) }
+    pub fn loadn_from<R: PbObj>(&self, limit: uint, cursor: Cursor) -> IoResult<Envelope> { self._load(PbObj::root_uri(None::<R>), Some(limit), None, Some(cursor)) }
+    pub fn loadn_since<R: PbObj>(&self, limit: uint, since: Timestamp) -> IoResult<Envelope> { self._load(PbObj::root_uri(None::<R>), Some(limit), Some(since), None) }
 }
 
 #[test]
 fn test_get_objects() {
     let api = PbAPI::new(env!("PB_API_KEY"));
-    for obj in vec!["pushes", "devices", "contacts", "channels", "clients", "grants", "subscriptions"].iter() {
-        let result = api.loadn(*obj, 10);
-        match result {
-            Ok(env) => {
-                match env.pushes {
-                    None => fail!("{} missing", obj),
-                    Some(ref pushes) => {
-                        assert!(pushes.len() <= 10);
-                    }
-                }
-            },
-            Err(e) => fail!("error for {}: {}", obj, e)
-        }
-    }
-}
-
-#[test]
-fn test_error() {
-    let api = PbAPI::new(env!("PB_API_KEY"));
-    let result = api.load("invalid_object");
+    let result = api.loadn::<Push>(10);
     match result {
-        Ok(env) => fail!("expected error, got {}", env),
-        Err(_) => ()
+        Ok(env) => {
+            match env.pushes {
+                None => fail!("push missing"),
+                Some(ref pushes) => {
+                    assert!(pushes.len() <= 10);
+                }
+            }
+        },
+        Err(e) => fail!("error: {}", e)
     }
 }
 
 #[test]
 fn test_delete() {
     let api = PbAPI::new(env!("PB_API_KEY"));
-    let result = api.delete("pushes/123");
+    let result = api.remove::<Push>("123".to_string());
     assert_eq!(result, Ok(()));
 }
 
-#[test]
-fn test_load_by_iden() {
-    let api = PbAPI::new(env!("PB_API_KEY"));
-    let result = api.load_by_iden::<Push>("pushes", "123".to_string());
-    fail!("{}", result);
-}

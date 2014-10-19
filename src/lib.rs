@@ -6,6 +6,7 @@
 #![crate_type = "rlib"]
 
 #![feature(macro_rules)]
+#![feature(associated_types)]
 
 extern crate http;
 extern crate websocket;

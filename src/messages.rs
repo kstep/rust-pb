@@ -11,6 +11,7 @@ pub trait PbMsg {
 
 #[deriving(PartialEq, Show)]
 pub enum TargetIden {
+    CurrentUser,
     DeviceIden(Iden),
     ContactEmail(String),
     ChannelTag(String),
@@ -38,6 +39,7 @@ impl<S: Encoder<E>, E> Encodable<S, E> for PushMsg {
             try!(e.emit_struct_field("body", 1u, |e| self.body.encode(e)));
             try!(e.emit_struct_field("source_device_iden", 2u, |e| self.source_device_iden.encode(e)));
             try!(match self.target {
+                TargetIden::CurrentUser => Ok(()),
                 TargetIden::DeviceIden(ref iden) => e.emit_struct_field("device_iden", 3u, |e| e.emit_str(iden.as_slice())),
                 TargetIden::ContactEmail(ref email) => e.emit_struct_field("email", 3u, |e| e.emit_str(email.as_slice())),
                 TargetIden::ChannelTag(ref tag) => e.emit_struct_field("channel_tag", 3u, |e| e.emit_str(tag.as_slice())),

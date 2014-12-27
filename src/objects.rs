@@ -610,8 +610,8 @@ fn test_list_push_decode() {
             channel_iden: None,
 
             data: PushData::List(vec![
-                from_str::<ListItem>("Item One").unwrap().checked(),
-                from_str::<ListItem>("Item Two").unwrap()
+                "Item One".parse::<ListItem>().unwrap().checked(),
+                "Item Two".parse::<ListItem>().unwrap()
             ]),
         }),
         Err(e) => panic!("Error: {}", e)

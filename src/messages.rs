@@ -6,7 +6,7 @@ use objects::{Iden, PushData};
 use serialize::json;
 
 pub trait PbMsg {
-    type Obj;
+    //type Obj;
 }
 
 #[deriving(PartialEq, Show)]
@@ -29,7 +29,7 @@ pub struct PushMsg {
 }
 
 impl PbMsg for PushMsg {
-    type Obj = super::objects::Push;
+    //type Obj = super::objects::Push;
 }
 
 impl<S: Encoder<E>, E> Encodable<S, E> for PushMsg {
@@ -58,7 +58,7 @@ pub struct DeviceMsg {
 }
 
 impl PbMsg for DeviceMsg {
-    type Obj = super::objects::Device;
+    //type Obj = super::objects::Device;
 }
 
 impl<S:Encoder<E>, E> Encodable<S, E> for DeviceMsg {
@@ -78,7 +78,7 @@ pub struct ContactMsg {
 }
 
 impl PbMsg for ContactMsg {
-    type Obj = super::objects::Contact;
+    //type Obj = super::objects::Contact;
 }
 
 #[test]

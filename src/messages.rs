@@ -41,10 +41,10 @@ impl<S: Encoder<E>, E> Encodable<S, E> for PushMsg {
             try!(e.emit_struct_field("body", 1u, |e| self.body.encode(e)));
             try!(e.emit_struct_field("source_device_iden", 2u, |e| self.source_device_iden.encode(e)));
             try!(match self.target {
-                DeviceIden(ref iden) => e.emit_struct_field("device_iden", 3u, |e| e.emit_str(iden.as_slice())),
-                ContactEmail(ref email) => e.emit_struct_field("email", 3u, |e| e.emit_str(email.as_slice())),
-                ChannelTag(ref tag) => e.emit_struct_field("channel_tag", 3u, |e| e.emit_str(tag.as_slice())),
-                ClientIden(ref iden) => e.emit_struct_field("client_iden", 3u, |e| e.emit_str(iden.as_slice())),
+                TargetIden::DeviceIden(ref iden) => e.emit_struct_field("device_iden", 3u, |e| e.emit_str(iden.as_slice())),
+                TargetIden::ContactEmail(ref email) => e.emit_struct_field("email", 3u, |e| e.emit_str(email.as_slice())),
+                TargetIden::ChannelTag(ref tag) => e.emit_struct_field("channel_tag", 3u, |e| e.emit_str(tag.as_slice())),
+                TargetIden::ClientIden(ref iden) => e.emit_struct_field("client_iden", 3u, |e| e.emit_str(iden.as_slice())),
             });
             try!(self.data.encode(e));
             Ok(())

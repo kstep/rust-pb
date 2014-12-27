@@ -4,11 +4,13 @@ name = "pb"
 version = "0.0.1"
 authors = ["Konstantin Stepanov <me@kstep.me>"]
 
-[dependencies.websocket]
-git = "https://github.com/kstep/rust-websocket.git"
+[dependencies]
+rustc-serialize = "*"
+url = "*"
+
+#[dependencies.websocket]
+#git = "https://github.com/kstep/rust-websocket.git"
 
 [dependencies.http]
-git = "https://github.com/chris-morgan/rust-http.git"
+git = "https://github.com/kstep/rust-http.git"
 
-[dependencies.url]
-git = "https://github.com/servo/rust-url.git"

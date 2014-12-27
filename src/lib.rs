@@ -1,7 +1,5 @@
 #![crate_name = "pb"]
 
-#![comment = "WebSocket client"]
-#![license = "MIT/ASL2"]
 #![crate_type = "dylib"]
 #![crate_type = "rlib"]
 
@@ -9,9 +7,9 @@
 #![feature(associated_types)]
 
 extern crate http;
-extern crate websocket;
+//extern crate websocket;
 extern crate url;
-extern crate serialize;
+extern crate "rustc-serialize" as serialize;
 
 pub mod objects;
 pub mod events;

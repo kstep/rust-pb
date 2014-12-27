@@ -1,6 +1,7 @@
-use std::from_str::FromStr;
+use std::str::FromStr;
 use url::Url;
 use serialize::{Encodable, Decodable, Encoder, Decoder};
+use std::error;
 
 #[cfg(test)]
 use serialize::json;
@@ -233,6 +234,10 @@ impl PbObj for Grant {
     fn root_uri(_: Option<Grant>) -> &'static str { "grants" }
 }
 
+impl PbObj for Client {
+    fn root_uri(_: Option<Client>) -> &'static str { "clients" }
+}
+
 #[deriving(Show, PartialEq)]
 pub struct ListItem(bool, String);
 
@@ -299,39 +304,39 @@ impl<S: Decoder<E>, E> Decodable<S, E> for ListItem {
 
 #[deriving(Show, PartialEq)]
 pub enum PushData {
-    EmptyPush,
-    NotePush,
-    UrlPush(Option<Url>),
-    FilePush(String, String, Url, Option<Url>),  // name, type, url, image
-    ListPush(Vec<ListItem>),
-    AddressPush(String),
-    DismissalPush,
-    MirrorPush,
+    Empty,
+    Note,
+    Url(Option<Url>),
+    File(String, String, Url, Option<Url>),  // name, type, url, image
+    List(Vec<ListItem>),
+    Address(String),
+    Dismissal,
+    Mirror,
 }
 
 impl<S: Encoder<E>, E> Encodable<S, E> for PushData {
     fn encode(&self, encoder: &mut S) -> Result<(), E> {
         match *self {
-            EmptyPush => (),
-            MirrorPush => try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("mirror"))),
-            DismissalPush => try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("dismissal"))),
-            NotePush => try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("note"))),
-            UrlPush(ref url) => {
+            PushData::Empty => (),
+            PushData::Mirror => try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("mirror"))),
+            PushData::Dismissal => try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("dismissal"))),
+            PushData::Note => try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("note"))),
+            PushData::Url(ref url) => {
                 try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("url")));
                 try!(encoder.emit_struct_field("url", 101u, |e| url.encode(e)));
             },
-            FilePush(ref name, ref mime, ref url, ref img) => {
+            PushData::File(ref name, ref mime, ref url, ref img) => {
                 try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("file")));
                 try!(encoder.emit_struct_field("file_name", 101u, |e| name.encode(e)));
                 try!(encoder.emit_struct_field("file_type", 102u, |e| mime.encode(e)));
                 try!(encoder.emit_struct_field("file_url", 103u, |e| url.encode(e)));
                 try!(encoder.emit_struct_field("image_url", 104u, |e| img.encode(e)));
             },
-            ListPush(ref items) => {
+            PushData::List(ref items) => {
                 try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("list")));
                 try!(encoder.emit_struct_field("items", 101u, |e| items.encode(e)));
             },
-            AddressPush(ref address) => {
+            PushData::Address(ref address) => {
                 try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("address")));
                 try!(encoder.emit_struct_field("address", 101u, |e| address.encode(e)));
             },
@@ -346,21 +351,21 @@ impl<S: Decoder<E>, E> Decodable<S, E> for PushData {
 
         Ok(match typ {
             Some(ref t) => match t.as_slice() {
-                "note" => NotePush,
-                "link" => UrlPush(try!(decoder.read_struct_field("url", 0, |d| Decodable::decode(d)))),
-                "file" => FilePush(
+                "note" => PushData::Note,
+                "link" => PushData::Url(try!(decoder.read_struct_field("url", 0, |d| Decodable::decode(d)))),
+                "file" => PushData::File(
                     try!(decoder.read_struct_field("file_name", 0, |d| Decodable::decode(d))),
                     try!(decoder.read_struct_field("file_type", 0, |d| Decodable::decode(d))),
                     try!(decoder.read_struct_field("file_url", 0, |d| Decodable::decode(d))),
                     try!(decoder.read_struct_field("image_url", 0, |d| Decodable::decode(d))),
                     ),
-                "list" => ListPush(try!(decoder.read_struct_field("items", 0, |d| Decodable::decode(d)))),
-                "address" => AddressPush(try!(decoder.read_struct_field("address", 0, |d| Decodable::decode(d)))),
-                "mirror" => MirrorPush,
-                "dismissal" => DismissalPush,
+                "list" => PushData::List(try!(decoder.read_struct_field("items", 0, |d| Decodable::decode(d)))),
+                "address" => PushData::Address(try!(decoder.read_struct_field("address", 0, |d| Decodable::decode(d)))),
+                "mirror" => PushData::Mirror,
+                "dismissal" => PushData::Dismissal,
                 typ @ _ => return Err(decoder.error(format!("Unknown type: {}", typ).as_slice()))
             },
-            _ => EmptyPush
+            _ => PushData::Empty
         })
     }
 }
@@ -420,6 +425,50 @@ pub struct Envelope {
     pub error: Option<Error>,
 }
 
+pub trait ToPbResult<R: PbObj> {
+    fn result(self) -> Option<Result<(Vec<R>, Option<Cursor>), Error>> {
+        None
+    }
+    fn ok(self) -> Option<(Vec<R>, Option<Cursor>)> {
+        match self.result() {
+            Some(Ok(r)) => Some(r),
+            _ => None
+        }
+    }
+    fn err(self) -> Option<Error> {
+        match self.result() {
+            Some(Err(e)) => Some(e),
+            _ => None
+        }
+    }
+}
+
+macro_rules! to_pb_result_impl {
+    ($(($t:ty, $f:ident)),+) => {
+        $(impl ToPbResult<$t> for Envelope {
+            fn result(self) -> Option<Result<(Vec<$t>, Option<Cursor>), Error>> {
+                match self.$f {
+                    Some(xs) => Some(Ok((xs, self.cursor))),
+                    None => match self.error {
+                        Some(e) => Some(Err(e)),
+                        None => None
+                    }
+                }
+            }
+        })+
+    }
+}
+
+to_pb_result_impl! {
+    (Channel, channels),
+    (Client, clients),
+    (Device, devices),
+    (Grant, grants),
+    (Push, pushes),
+    (Contact, contacts),
+    (Subscription, subscriptions)
+}
+
 impl Envelope {
     pub fn new() -> Envelope {
         Envelope {
@@ -440,24 +489,6 @@ impl Envelope {
     pub fn is_err(&self) -> bool {
         self.error.is_some()
     }
-    pub fn ok<'a>(&'a self) -> Option<&'a Envelope> {
-        match self.error {
-            Some(..) => None,
-            None => Some(self)
-        }
-    }
-    pub fn err<'a>(&'a self) -> Option<&'a Error> {
-        match self.error {
-            Some(ref err) => Some(err),
-            None => None
-        }
-    }
-    pub fn result<'a>(&'a self) -> Result<&'a Envelope, &'a Error> {
-        match self.error {
-            Some(ref err) => Err(err),
-            None => Ok(self)
-        }
-    }
 }
 
 #[deriving(Show, PartialEq)]
@@ -465,6 +496,11 @@ pub struct Error {
     message: String,
     typ: String,
     cat: String,
+}
+
+impl error::Error for Error {
+    fn description(&self) -> &str { "PushBuller error" }
+    fn detail(&self) -> Option<String> { Some(self.message.clone()) }
 }
 
 impl<S: Decoder<E>, E> Decodable<S, E> for Error {
@@ -523,9 +559,9 @@ fn test_note_push_decode() {
             source_device_iden: None,
             channel_iden: None,
 
-            data: NotePush,
+            data: PushData::Note,
         }),
-        Err(e) => fail!("Error: {}", e)
+        Err(e) => panic!("Error: {}", e)
     }
 }
 
@@ -573,12 +609,12 @@ fn test_list_push_decode() {
             target_device_iden: None,
             channel_iden: None,
 
-            data: ListPush(vec![
+            data: PushData::List(vec![
                 from_str::<ListItem>("Item One").unwrap().checked(),
                 from_str::<ListItem>("Item Two").unwrap()
             ]),
         }),
-        Err(e) => fail!("Error: {}", e)
+        Err(e) => panic!("Error: {}", e)
     }
 }
 
@@ -615,7 +651,7 @@ fn test_account_decode() {
             //preferences: Map(...),
             api_key: "9aau3q49898u98me3q48u".to_string(),
         }),
-        Err(e) => fail!("Error: {}", e)
+        Err(e) => panic!("Error: {}", e)
     }
 }
 
@@ -653,7 +689,7 @@ fn test_decode_err_result() {
             assert_eq!(env.ok(), None);
             //assert_eq!(env.result(), Err(&env.error.unwrap()));
         },
-        err @ _ => fail!("Unexpected result: {}", err)
+        err @ _ => panic!("Unexpected result: {}", err)
     }
 }
 
@@ -678,7 +714,7 @@ fn test_decode_ok_result() {
                 subscriptions: None,
                 error: None,
                 cursor: None
-            })
+            });
 
             assert_eq!(env.is_ok(), true);
             assert_eq!(env.is_err(), false);
@@ -687,7 +723,7 @@ fn test_decode_ok_result() {
             assert_eq!(env.result(), Ok(env));
         },
         _ => ()
-        //err @ _ => fail!("Unexpected result: {}", err)
+        //err @ _ => panic!("Unexpected result: {}", err)
     }
 }
 

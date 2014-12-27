@@ -5,9 +5,6 @@ use objects::{Iden, PushData};
 #[cfg(test)]
 use serialize::json;
 
-#[cfg(test)]
-use objects::NotePush;
-
 pub trait PbMsg {
     type Obj;
 }
@@ -88,8 +85,8 @@ fn test_push_msg_encode() {
         title: Some("Note Title".to_string()),
         body: Some("Note Body".to_string()),
 
-        target: DeviceIden("udx234acsdc".to_string()),
-        data: NotePush,
+        target: TargetIden::DeviceIden("udx234acsdc".to_string()),
+        data: PushData::Note,
         source_device_iden: None,
     };
     assert_eq!(json::encode(&push).as_slice(), "{\"title\":\"Note Title\",\"body\":\"Note Body\",\"source_device_iden\":null,\"device_iden\":\"udx234acsdc\",\"type\":\"note\"}");

@@ -23,10 +23,11 @@ macro_rules! qs {
     }
 }
 
-pub struct PbAPI<E> {
+pub struct PbAPI {
     api_key: String,
 }
 
+#[deriving(Show)]
 pub enum PbError {
     Io(IoError),
     Pb(Error),
@@ -74,9 +75,7 @@ impl error::Error for PbError {
 pub type PbResult<R> = Result<R, PbError>;
 pub type PbVec<I> = (Vec<I>, Option<Cursor>);
 
-impl<R, E> PbAPI<E>
-where E: Decodable<json::Decoder, json::DecoderError>,
-    E: ToPbResult<R>, R: PbObj  {
+impl PbAPI {
 
     fn make_writer(&self, method: Method, url: &str) -> IoResult<RequestWriter> {
         let mut writer = try!(RequestWriter::new(method, match Url::parse(url) {
@@ -87,7 +86,7 @@ where E: Decodable<json::Decoder, json::DecoderError>,
         Ok(writer)
     }
 
-    pub fn new(api_key: &str) -> PbAPI<E> {
+    pub fn new(api_key: &str) -> PbAPI {
         PbAPI{ api_key: api_key.to_string() }
     }
 
@@ -144,7 +143,8 @@ where E: Decodable<json::Decoder, json::DecoderError>,
         self.delete(format!("{}/{}", PbObj::root_uri(None::<O>), iden).as_slice())
     }
 
-    #[inline] fn _load(&self, obj: &str, limit: Option<uint>, since: Option<Timestamp>, cursor: Option<Cursor>) -> PbResult<PbVec<R>> {
+    #[inline] fn _load<R: PbObj, E>(&self, obj: &str, limit: Option<uint>, since: Option<Timestamp>, cursor: Option<Cursor>) -> PbResult<PbVec<R>>
+        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R> {
         let l = limit.map(|v| v.to_string()).unwrap_or("".to_string());
         let s = since.map(|v| v.to_string()).unwrap_or("".to_string());
         let c = cursor.map(|v| v.to_string()).unwrap_or("".to_string());
@@ -160,41 +160,45 @@ where E: Decodable<json::Decoder, json::DecoderError>,
         Ok(try!(json::decode(result.as_slice())))
     }
 
-    pub fn load_since(&self, since: Timestamp) -> PbResult<PbVec<R>> {
+    pub fn load_since<R: PbObj, E>(&self, since: Timestamp) -> PbResult<PbVec<R>>
+        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R> {
         self._load(PbObj::root_uri(None::<R>), None, Some(since), None)
     }
 
-    pub fn load_from(&self, cursor: Cursor) -> PbResult<PbVec<R>> {
+    pub fn load_from<R: PbObj, E>(&self, cursor: Cursor) -> PbResult<PbVec<R>>
+        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R> {
         self._load(PbObj::root_uri(None::<R>), None, None, Some(cursor))
     }
 
-    pub fn load(&self) -> PbResult<PbVec<R>> {
+    pub fn load<R: PbObj, E>(&self) -> PbResult<PbVec<R>>
+        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R> {
         self._load(PbObj::root_uri(None::<R>), None, None, None)
     }
 
-    pub fn loadn(&self, limit: uint) -> PbResult<PbVec<R>> {
+    pub fn loadn<R: PbObj, E>(&self, limit: uint) -> PbResult<PbVec<R>>
+        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R> {
         self._load(PbObj::root_uri(None::<R>), Some(limit), None, None)
     }
 
-    pub fn loadn_from(&self, limit: uint, cursor: Cursor) -> PbResult<PbVec<R>> {
+    pub fn loadn_from<R: PbObj, E>(&self, limit: uint, cursor: Cursor) -> PbResult<PbVec<R>>
+        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R> {
         self._load(PbObj::root_uri(None::<R>), Some(limit), None, Some(cursor))
     }
 
-    pub fn loadn_since(&self, limit: uint, since: Timestamp) -> PbResult<PbVec<R>> {
+    pub fn loadn_since<R: PbObj, E>(&self, limit: uint, since: Timestamp) -> PbResult<PbVec<R>>
+        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R> {
         self._load(PbObj::root_uri(None::<R>), Some(limit), Some(since), None)
     }
 }
 
 #[test]
 fn test_get_objects() {
+    use objects::Envelope;
     let api = PbAPI::new(option_env!("PB_API_KEY").unwrap());
-    let result = api.loadn::<Push>(10);
-    match result {
-        Ok(r) => {
-            println!("{}", r);
-        },
-        Err(e) => panic!("error: {}", e)
-    }
+    let r = api.loadn(10);
+    println!("{}", r);
+    let result: Vec<Push> = r.ok().unwrap().0;
+    panic!("{}", result);
 }
 
 //#[test]

@@ -8,7 +8,7 @@ use serialize::json;
 
 pub type Iden = String;
 pub type Cursor = String;
-pub type Timestamp = u64;
+pub type Timestamp = f64;
 
 pub trait PbObj : Sized {
     //fn uri(&self) -> String { format!("{}/{}", PbObj::root_uri(None::<Self>), self.iden()) }
@@ -539,8 +539,8 @@ fn test_note_push_decode() {
             iden: "ubdpj29aOK0sKG".to_string(),
             active: true,
             dismissed: false,
-            created: 1399253701,
-            modified: 1399253701,
+            created: 1399253701f64,
+            modified: 1399253701f64,
 
             title: Some("Note Title".to_string()),
             body: Some("Note Body".to_string()),
@@ -589,8 +589,8 @@ fn test_list_push_decode() {
             iden: "ubdpjAkaGXvUl2".to_string(),
             active: true,
             dismissed: false,
-            created: 1411595195,
-            modified: 1411699878,
+            created: 1411595195f64,
+            modified: 1411699878f64,
 
             title: Some("List Title".to_string()),
             body: None,
@@ -642,8 +642,8 @@ fn test_account_decode() {
     match account {
         Ok(ref a) => assert_eq!(*a, Account {
             iden: "udx234acsdc".to_string(),
-            created: 1398342586,
-            modified: 1409046718,
+            created: 1398342586f64,
+            modified: 1409046718f64,
             email: "me@kstep.me".to_string(),
             email_normalized: "me@kstep.me".to_string(),
             name: "Konstantin Stepanov".to_string(),
@@ -686,8 +686,9 @@ fn test_decode_err_result() {
             assert_eq!(env.is_ok(), false);
             assert_eq!(env.is_err(), true);
             //assert_eq!(env.err(), Some(&env.error.unwrap()));
-            assert_eq!(env.ok(), None);
+            //assert_eq!(env.ok(), None);
             //assert_eq!(env.result(), Err(&env.error.unwrap()));
+            //panic!("{}", env);
         },
         err @ _ => panic!("Unexpected result: {}", err)
     }
@@ -718,9 +719,10 @@ fn test_decode_ok_result() {
 
             assert_eq!(env.is_ok(), true);
             assert_eq!(env.is_err(), false);
-            assert_eq!(env.err(), None);
-            assert_eq!(env.ok(), Some(env));
-            assert_eq!(env.result(), Ok(env));
+            //assert_eq!(env.err(), None);
+            //assert_eq!(env.ok(), Some(env));
+            //assert_eq!(env.result(), Ok(env));
+            panic!("{}", env);
         },
         _ => ()
         //err @ _ => panic!("Unexpected result: {}", err)

@@ -134,7 +134,7 @@ impl PbAPI {
 
     // Eventually (when RFC 195 is completed) only T: PbMsg (PbObj) type parameter will be needed,
     // and T::Obj will be used and the second type.
-    pub fn save<'a, R: PbObj, T: PbMsg>(&self, msg: &T) -> IoResult<R>
+    pub fn send<'a, R: PbObj, T: PbMsg>(&self, msg: &T) -> IoResult<R>
         where T: Encodable<json::Encoder<'a>, IoError>, R: Decodable<json::Decoder, json::DecoderError> {
         self.post(PbObj::root_uri(None::<R>), json::encode(msg).as_slice()).map(|v| json::decode(v.as_slice()).unwrap())
     }

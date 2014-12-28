@@ -1,12 +1,13 @@
 
-use serialize::{Encodable, Encoder};
+use rustc_serialize::{Encodable, Encoder};
 use objects::{Iden, PushData};
 
 #[cfg(test)]
-use serialize::json;
+use rustc_serialize::json;
 
 pub trait PbMsg {
     //type Obj;
+    fn root_uri(_: Option<Self>) -> &'static str;
 }
 
 #[deriving(PartialEq, Show)]
@@ -30,6 +31,7 @@ pub struct PushMsg {
 
 impl PbMsg for PushMsg {
     //type Obj = super::objects::Push;
+    fn root_uri(_: Option<Self>) -> &'static str { "pushes" }
 }
 
 impl<S: Encoder<E>, E> Encodable<S, E> for PushMsg {
@@ -59,6 +61,7 @@ pub struct DeviceMsg {
 
 impl PbMsg for DeviceMsg {
     //type Obj = super::objects::Device;
+    fn root_uri(_: Option<Self>) -> &'static str { "pushes" }
 }
 
 impl<S:Encoder<E>, E> Encodable<S, E> for DeviceMsg {
@@ -71,7 +74,7 @@ impl<S:Encoder<E>, E> Encodable<S, E> for DeviceMsg {
     }
 }
 
-#[deriving(PartialEq, Show, Encodable)]
+#[deriving(PartialEq, Show, RustcEncodable)]
 pub struct ContactMsg {
     pub name: String,
     pub email: String,
@@ -79,6 +82,7 @@ pub struct ContactMsg {
 
 impl PbMsg for ContactMsg {
     //type Obj = super::objects::Contact;
+    fn root_uri(_: Option<Self>) -> &'static str { "pushes" }
 }
 
 #[test]

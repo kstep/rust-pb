@@ -1,16 +1,17 @@
 use http::client::RequestWriter;
 use http::method::{Method, Get, Post, Delete};
 use http::headers::content_type::MediaType;
-use serialize::base64::{ToBase64, STANDARD};
-use serialize::json;
+use rustc_serialize::base64::{ToBase64, STANDARD};
+use rustc_serialize::json;
 use url::Url;
 use std::io;
 use std::io::{standard_error, IoResult, IoError};
 use std::str::from_utf8;
 use std::error;
+use std::fmt::Show;
 use objects::{Cursor, Timestamp, Error, PbObj, Iden, ToPbResult};
 use messages::PbMsg;
-use serialize::{Encodable, Decodable, Encoder, Decoder};
+use rustc_serialize::{Encodable, Decodable, Encoder, Decoder};
 
 #[cfg(test)]
 use objects::{Push, Device, Subscription, Grant, Client, Channel, Contact};
@@ -144,12 +145,13 @@ impl PbAPI {
     }
 
     #[inline] fn _load<R: PbObj, E>(&self, obj: &str, limit: Option<uint>, since: Option<Timestamp>, cursor: Option<Cursor>) -> PbResult<PbVec<R>>
-        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R> {
+        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R>, E: Show {
         let l = limit.map(|v| v.to_string()).unwrap_or("".to_string());
         let s = since.map(|v| v.to_string()).unwrap_or("".to_string());
         let c = cursor.map(|v| v.to_string()).unwrap_or("".to_string());
         let result = try!(self.get(obj, qs![limit -> l[], modified_after -> s[], cursor -> c[]][]));
         let env = try!(json::decode::<E>(result.as_slice()));
+        println!("{}", env);
         Ok(try!(env.result().unwrap_or_else(|| Ok((Vec::new(), None)))))
     }
 
@@ -161,32 +163,32 @@ impl PbAPI {
     }
 
     pub fn load_since<R: PbObj, E>(&self, since: Timestamp) -> PbResult<PbVec<R>>
-        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R> {
+        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R>, E: Show {
         self._load(PbObj::root_uri(None::<R>), None, Some(since), None)
     }
 
     pub fn load_from<R: PbObj, E>(&self, cursor: Cursor) -> PbResult<PbVec<R>>
-        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R> {
+        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R>, E: Show {
         self._load(PbObj::root_uri(None::<R>), None, None, Some(cursor))
     }
 
     pub fn load<R: PbObj, E>(&self) -> PbResult<PbVec<R>>
-        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R> {
+        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R>, E: Show {
         self._load(PbObj::root_uri(None::<R>), None, None, None)
     }
 
     pub fn loadn<R: PbObj, E>(&self, limit: uint) -> PbResult<PbVec<R>>
-        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R> {
+        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R>, E: Show {
         self._load(PbObj::root_uri(None::<R>), Some(limit), None, None)
     }
 
     pub fn loadn_from<R: PbObj, E>(&self, limit: uint, cursor: Cursor) -> PbResult<PbVec<R>>
-        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R> {
+        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R>, E: Show {
         self._load(PbObj::root_uri(None::<R>), Some(limit), None, Some(cursor))
     }
 
     pub fn loadn_since<R: PbObj, E>(&self, limit: uint, since: Timestamp) -> PbResult<PbVec<R>>
-        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R> {
+        where E: Decodable<json::Decoder, json::DecoderError>, E: ToPbResult<R>, E: Show {
         self._load(PbObj::root_uri(None::<R>), Some(limit), Some(since), None)
     }
 }

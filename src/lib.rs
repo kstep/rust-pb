@@ -9,7 +9,7 @@
 extern crate http;
 //extern crate websocket;
 extern crate url;
-extern crate "rustc-serialize" as serialize;
+extern crate "rustc-serialize" as rustc_serialize;
 
 pub mod objects;
 pub mod events;

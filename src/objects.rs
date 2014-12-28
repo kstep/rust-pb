@@ -1,10 +1,10 @@
 use std::str::FromStr;
 use url::Url;
-use serialize::{Encodable, Decodable, Encoder, Decoder};
+use rustc_serialize::{Encodable, Decodable, Encoder, Decoder};
 use std::error;
 
 #[cfg(test)]
-use serialize::json;
+use rustc_serialize::json;
 
 pub type Iden = String;
 pub type Cursor = String;
@@ -15,7 +15,7 @@ pub trait PbObj : Sized {
     fn root_uri(_: Option<Self>) -> &'static str;
 }
 
-#[deriving(Show, PartialEq, Decodable, Encodable)]
+#[deriving(Show, PartialEq, RustcDecodable, RustcEncodable)]
 pub struct Account {
     iden: Iden,
     created: Timestamp,
@@ -100,7 +100,7 @@ impl<S: Decoder<E>, E> Decodable<S, E> for Device {
     }
 }
 
-#[deriving(Encodable, Decodable, Show, PartialEq)]
+#[deriving(RustcEncodable, RustcDecodable, Show, PartialEq)]
 pub struct Contact {
     pub active: bool,
     pub created: Timestamp,
@@ -112,7 +112,7 @@ pub struct Contact {
     pub status: String,
 }
 
-#[deriving(Encodable, Decodable, Show, PartialEq)]
+#[deriving(RustcEncodable, RustcDecodable, Show, PartialEq)]
 pub struct Grant {
     pub iden: Iden,
     pub active: bool,
@@ -121,7 +121,7 @@ pub struct Grant {
     pub client: Option<Client>,
 }
 
-#[deriving(Encodable, Decodable, Show, PartialEq)]
+#[deriving(RustcEncodable, RustcDecodable, Show, PartialEq)]
 pub struct Client {
     pub iden: Iden,
     pub image_url: Url,
@@ -370,7 +370,7 @@ impl<S: Decoder<E>, E> Decodable<S, E> for PushData {
     }
 }
 
-#[deriving(Show, PartialEq, Decodable)]
+#[deriving(Show, PartialEq, RustcDecodable)]
 pub struct Channel {
     pub iden: Iden,
     pub active: bool,
@@ -388,7 +388,7 @@ impl PbObj for Channel {
     fn root_uri(_: Option<Channel>) -> &'static str { "channels" }
 }
 
-#[deriving(Show, PartialEq, Decodable)]
+#[deriving(Show, PartialEq, RustcDecodable)]
 pub struct ChannelInfo {
     pub iden: Iden,
     pub tag: String,
@@ -398,7 +398,7 @@ pub struct ChannelInfo {
     pub website_url: Option<Url>,
 }
 
-#[deriving(Show, PartialEq, Decodable)]
+#[deriving(Show, PartialEq, RustcDecodable)]
 pub struct Subscription {
     pub iden: Iden,
     pub active: bool,
@@ -411,7 +411,7 @@ impl PbObj for Subscription {
     fn root_uri(_: Option<Subscription>) -> &'static str { "subscriptions" }
 }
 
-#[deriving(Show, PartialEq, Decodable)]
+#[deriving(Show, PartialEq, RustcDecodable)]
 pub struct Envelope {
     //aliases: Vec<Alias>,
     pub channels: Option<Vec<Channel>>,

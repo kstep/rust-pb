@@ -1,4 +1,4 @@
-use serialize::{Decodable, Decoder};
+use rustc_serialize::{Decodable, Decoder};
 use objects::Push;
 
 #[deriving(Show, PartialEq)]

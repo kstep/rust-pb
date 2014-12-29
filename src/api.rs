@@ -8,6 +8,7 @@ use std::io;
 use std::io::{standard_error, IoResult, IoError};
 use std::str::from_utf8;
 use std::error;
+use std::error::FromError;
 use std::fmt::Show;
 use objects::{Cursor, Timestamp, Error, PbObj, Iden, ToPbResult};
 use messages::PbMsg;
@@ -35,15 +36,15 @@ pub enum PbError {
     Js(json::DecoderError)
 }
 
-impl error::FromError<IoError> for PbError {
+impl FromError<IoError> for PbError {
     fn from_error(e: IoError) -> PbError { PbError::Io(e) }
 }
 
-impl error::FromError<Error> for PbError {
+impl FromError<Error> for PbError {
     fn from_error(e: Error) -> PbError { PbError::Pb(e) }
 }
 
-impl error::FromError<json::DecoderError> for PbError {
+impl FromError<json::DecoderError> for PbError {
     fn from_error(e: json::DecoderError) -> PbError { PbError::Js(e) }
 }
 
@@ -135,9 +136,16 @@ impl PbAPI {
 
     // Eventually (when RFC 195 is completed) only T: PbMsg (PbObj) type parameter will be needed,
     // and T::Obj will be used and the second type.
-    pub fn send<'a, R: PbObj, T: PbMsg>(&self, msg: &T) -> IoResult<R>
+    pub fn send<'a, R: PbObj, T: PbMsg>(&self, msg: &T) -> PbResult<R>
         where T: Encodable<json::Encoder<'a>, IoError>, R: Decodable<json::Decoder, json::DecoderError> {
-        self.post(PbObj::root_uri(None::<R>), json::encode(msg).as_slice()).map(|v| json::decode(v.as_slice()).unwrap())
+        let resp = try!(self.post(PbObj::root_uri(None::<R>), json::encode(msg).as_slice()));
+        match json::decode(resp[]) {
+            Ok(o) => Ok(o),
+            Err(e) => Err(match json::decode::<Error>(resp[]) {
+                Ok(err) => FromError::from_error(err),
+                Err(_) => FromError::from_error(e)
+            })
+        }
     }
 
     pub fn remove<O: PbObj>(&self, iden: Iden) -> IoResult<()> {

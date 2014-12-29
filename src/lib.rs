@@ -4,6 +4,7 @@
 #![crate_type = "rlib"]
 
 #![feature(macro_rules)]
+#![feature(slicing_syntax)]
 #![feature(associated_types)]
 
 extern crate http;

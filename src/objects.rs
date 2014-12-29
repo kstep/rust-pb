@@ -284,7 +284,7 @@ impl<S: Encoder<E>, E> Encodable<S, E> for ListItem {
         match *self {
             ListItem(checked, ref text) => encoder.emit_struct("ListItem", 0, |e| {
                 try!(e.emit_struct_field("checked", 0u, |e| e.emit_bool(checked)));
-                try!(e.emit_struct_field("text", 1u, |e| e.emit_str(text.as_slice())));
+                try!(e.emit_struct_field("text", 1u, |e| e.emit_str(text[])));
                 Ok(())
             })
         }
@@ -350,7 +350,7 @@ impl<S: Decoder<E>, E> Decodable<S, E> for PushData {
         let typ: Option<String> = try!(decoder.read_struct_field("type", 0, |d| d.read_option(|d, b| if b { d.read_str().map(|v| Some(v)) } else { Ok(None) })));
 
         Ok(match typ {
-            Some(ref t) => match t.as_slice() {
+            Some(ref t) => match t[] {
                 "note" => PushData::Note,
                 "link" => PushData::Url(try!(decoder.read_struct_field("url", 0, |d| Decodable::decode(d)))),
                 "file" => PushData::File(
@@ -363,7 +363,7 @@ impl<S: Decoder<E>, E> Decodable<S, E> for PushData {
                 "address" => PushData::Address(try!(decoder.read_struct_field("address", 0, |d| Decodable::decode(d)))),
                 "mirror" => PushData::Mirror,
                 "dismissal" => PushData::Dismissal,
-                typ @ _ => return Err(decoder.error(format!("Unknown type: {}", typ).as_slice()))
+                typ @ _ => return Err(decoder.error(format!("Unknown type: {}", typ)[]))
             },
             _ => PushData::Empty
         })

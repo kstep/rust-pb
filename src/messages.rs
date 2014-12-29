@@ -42,10 +42,10 @@ impl<S: Encoder<E>, E> Encodable<S, E> for PushMsg {
             try!(e.emit_struct_field("source_device_iden", 2u, |e| self.source_device_iden.encode(e)));
             try!(match self.target {
                 TargetIden::CurrentUser => Ok(()),
-                TargetIden::DeviceIden(ref iden) => e.emit_struct_field("device_iden", 3u, |e| e.emit_str(iden.as_slice())),
-                TargetIden::ContactEmail(ref email) => e.emit_struct_field("email", 3u, |e| e.emit_str(email.as_slice())),
-                TargetIden::ChannelTag(ref tag) => e.emit_struct_field("channel_tag", 3u, |e| e.emit_str(tag.as_slice())),
-                TargetIden::ClientIden(ref iden) => e.emit_struct_field("client_iden", 3u, |e| e.emit_str(iden.as_slice())),
+                TargetIden::DeviceIden(ref iden) => e.emit_struct_field("device_iden", 3u, |e| e.emit_str(iden[])),
+                TargetIden::ContactEmail(ref email) => e.emit_struct_field("email", 3u, |e| e.emit_str(email[])),
+                TargetIden::ChannelTag(ref tag) => e.emit_struct_field("channel_tag", 3u, |e| e.emit_str(tag[])),
+                TargetIden::ClientIden(ref iden) => e.emit_struct_field("client_iden", 3u, |e| e.emit_str(iden[])),
             });
             try!(self.data.encode(e));
             Ok(())
@@ -95,7 +95,7 @@ fn test_push_msg_encode() {
         data: PushData::Note,
         source_device_iden: None,
     };
-    assert_eq!(json::encode(&push).as_slice(), "{\"title\":\"Note Title\",\"body\":\"Note Body\",\"source_device_iden\":null,\"device_iden\":\"udx234acsdc\",\"type\":\"note\"}");
+    assert_eq!(json::encode(&push)[], "{\"title\":\"Note Title\",\"body\":\"Note Body\",\"source_device_iden\":null,\"device_iden\":\"udx234acsdc\",\"type\":\"note\"}");
 }
 
 #[test]
@@ -104,5 +104,5 @@ fn test_device_msg_encode() {
         nickname: "Nickname".to_string(),
         typ: "stream".to_string()
     };
-    assert_eq!(json::encode(&device).as_slice(), "{\"nickname\":\"Nickname\",\"type\":\"stream\"}");
+    assert_eq!(json::encode(&device)[], "{\"nickname\":\"Nickname\",\"type\":\"stream\"}");
 }

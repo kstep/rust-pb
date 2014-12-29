@@ -94,11 +94,11 @@ impl PbAPI {
 
     fn get(&self, path: &str, params: &[(&str, &str)]) -> IoResult<String> {
         let url = format!("{}{}?{}", BASE_URL, path, params.iter().filter(|v| v.1 != "").map(|&(k, v)| format!("{}={}&", k, v)).fold("".to_string(), |acc, item| acc + item[]));
-        let writer = try!(self.make_writer(Get, url.as_slice()));
+        let writer = try!(self.make_writer(Get, url[]));
 
         match writer.read_response() {
             Ok(ref mut resp) => {
-                match from_utf8(try!(resp.read_to_end()).as_slice()) {
+                match from_utf8(try!(resp.read_to_end())[]) {
                     Ok(ref r) => Ok(r.to_string()),
                     _ => return Err(standard_error(io::InvalidInput))
                 }
@@ -109,14 +109,14 @@ impl PbAPI {
 
     fn post(&self, path: &str, content: &str) -> IoResult<String> {
         let url = format!("{}{}", BASE_URL, path);
-        let mut writer = try!(self.make_writer(Post, url.as_slice()));
+        let mut writer = try!(self.make_writer(Post, url[]));
 
         writer.headers.content_length = Some(content.len());
         writer.headers.content_type = Some(MediaType::new("application".to_string(), "json".to_string(), Vec::new()));
         try!(writer.write(content.as_bytes()));
 
         match writer.read_response() {
-            Ok(ref mut resp) => match from_utf8(try!(resp.read_to_end()).as_slice()) {
+            Ok(ref mut resp) => match from_utf8(try!(resp.read_to_end())[]) {
                 Ok(ref r) => Ok(r.to_string()),
                 _ => return Err(standard_error(io::InvalidInput))
             },
@@ -126,9 +126,9 @@ impl PbAPI {
 
     fn delete(&self, path: &str) -> IoResult<()> {
         let url = format!("{}{}", BASE_URL, path);
-        let writer = try!(self.make_writer(Delete, url.as_slice()));
+        let writer = try!(self.make_writer(Delete, url[]));
         let mut resp = try!(writer.read_response().map_err(|(_, e)| e));
-        match from_utf8(try!(resp.read_to_end()).as_slice()).map(|v| json::decode::<Error>(v)) {
+        match from_utf8(try!(resp.read_to_end())[]).map(|v| json::decode::<Error>(v)) {
             Ok(Ok(_)) => Err(standard_error(io::InvalidInput)),
             _ => Ok(())
         }
@@ -138,7 +138,7 @@ impl PbAPI {
     // and T::Obj will be used and the second type.
     pub fn send<'a, R: PbObj, T: PbMsg>(&self, msg: &T) -> PbResult<R>
         where T: Encodable<json::Encoder<'a>, IoError>, R: Decodable<json::Decoder, json::DecoderError> {
-        let resp = try!(self.post(PbObj::root_uri(None::<R>), json::encode(msg).as_slice()));
+        let resp = try!(self.post(PbObj::root_uri(None::<R>), json::encode(msg)[]));
         match json::decode(resp[]) {
             Ok(o) => Ok(o),
             Err(e) => Err(match json::decode::<Error>(resp[]) {
@@ -149,7 +149,7 @@ impl PbAPI {
     }
 
     pub fn remove<O: PbObj>(&self, iden: Iden) -> IoResult<()> {
-        self.delete(format!("{}/{}", PbObj::root_uri(None::<O>), iden).as_slice())
+        self.delete(format!("{}/{}", PbObj::root_uri(None::<O>), iden)[])
     }
 
     #[inline] fn _load<R: PbObj, E>(&self, obj: &str, limit: Option<uint>, since: Option<Timestamp>, cursor: Option<Cursor>) -> PbResult<PbVec<R>>
@@ -158,7 +158,7 @@ impl PbAPI {
         let s = since.map(|v| v.to_string()).unwrap_or("".to_string());
         let c = cursor.map(|v| v.to_string()).unwrap_or("".to_string());
         let result = try!(self.get(obj, qs![limit -> l[], modified_after -> s[], cursor -> c[]][]));
-        let env = try!(json::decode::<E>(result.as_slice()));
+        let env = try!(json::decode::<E>(result[]));
         println!("{}", env);
         Ok(try!(env.result().unwrap_or_else(|| Ok((Vec::new(), None)))))
     }
@@ -166,8 +166,8 @@ impl PbAPI {
     pub fn load_by_iden<R: PbObj>(&self, iden: Iden) -> PbResult<R>
         where R: Decodable<json::Decoder, json::DecoderError> {
         let url = format!("{}/{}", PbObj::root_uri(None::<R>), iden);
-        let result = try!(self.get(url.as_slice(), &[]));
-        Ok(try!(json::decode(result.as_slice())))
+        let result = try!(self.get(url[], &[]));
+        Ok(try!(json::decode(result[])))
     }
 
     pub fn load_since<R: PbObj, E>(&self, since: Timestamp) -> PbResult<PbVec<R>>

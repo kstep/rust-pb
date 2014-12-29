@@ -306,7 +306,7 @@ impl<S: Decoder<E>, E> Decodable<S, E> for ListItem {
 pub enum PushData {
     Empty,
     Note,
-    Url(Option<Url>),
+    Link(Option<Url>),
     File(String, String, Url, Option<Url>),  // name, type, url, image
     List(Vec<ListItem>),
     Address(String),
@@ -321,8 +321,8 @@ impl<S: Encoder<E>, E> Encodable<S, E> for PushData {
             PushData::Mirror => try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("mirror"))),
             PushData::Dismissal => try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("dismissal"))),
             PushData::Note => try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("note"))),
-            PushData::Url(ref url) => {
-                try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("url")));
+            PushData::Link(ref url) => {
+                try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("link")));
                 try!(encoder.emit_struct_field("url", 101u, |e| url.encode(e)));
             },
             PushData::File(ref name, ref mime, ref url, ref img) => {
@@ -352,7 +352,7 @@ impl<S: Decoder<E>, E> Decodable<S, E> for PushData {
         Ok(match typ {
             Some(ref t) => match t[] {
                 "note" => PushData::Note,
-                "link" => PushData::Url(try!(decoder.read_struct_field("url", 0, |d| Decodable::decode(d)))),
+                "link" => PushData::Link(try!(decoder.read_struct_field("url", 0, |d| Decodable::decode(d)))),
                 "file" => PushData::File(
                     try!(decoder.read_struct_field("file_name", 0, |d| Decodable::decode(d))),
                     try!(decoder.read_struct_field("file_type", 0, |d| Decodable::decode(d))),

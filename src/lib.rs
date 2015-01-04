@@ -6,6 +6,7 @@
 #![feature(macro_rules)]
 #![feature(slicing_syntax)]
 #![feature(associated_types)]
+#![feature(old_orphan_check)]
 
 extern crate http;
 //extern crate websocket;

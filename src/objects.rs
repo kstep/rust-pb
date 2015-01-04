@@ -425,7 +425,7 @@ pub struct Envelope {
     pub error: Option<Error>,
 }
 
-pub trait ToPbResult<R: PbObj> {
+pub trait ToPbResult<R: PbObj> : Sized {
     fn result(self) -> Option<Result<(Vec<R>, Option<Cursor>), Error>> {
         None
     }

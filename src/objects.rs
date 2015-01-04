@@ -15,7 +15,7 @@ pub trait PbObj : Sized {
     fn root_uri(_: Option<Self>) -> &'static str;
 }
 
-#[deriving(Show, PartialEq, RustcDecodable, RustcEncodable)]
+#[derive(Show, PartialEq, RustcDecodable, RustcEncodable)]
 pub struct Account {
     iden: Iden,
     created: Timestamp,
@@ -40,7 +40,7 @@ pub struct Account {
     //fn iden<'a>(&'a self) -> &'a Iden { &self.iden }
 //}
 
-#[deriving(Show, PartialEq)]
+#[derive(Show, PartialEq)]
 pub struct Device {
     app_version: Option<uint>,
     created: Timestamp,
@@ -100,7 +100,7 @@ impl<S: Decoder<E>, E> Decodable<S, E> for Device {
     }
 }
 
-#[deriving(RustcEncodable, RustcDecodable, Show, PartialEq)]
+#[derive(RustcEncodable, RustcDecodable, Show, PartialEq)]
 pub struct Contact {
     pub active: bool,
     pub created: Timestamp,
@@ -112,7 +112,7 @@ pub struct Contact {
     pub status: String,
 }
 
-#[deriving(RustcEncodable, RustcDecodable, Show, PartialEq)]
+#[derive(RustcEncodable, RustcDecodable, Show, PartialEq)]
 pub struct Grant {
     pub iden: Iden,
     pub active: bool,
@@ -121,7 +121,7 @@ pub struct Grant {
     pub client: Option<Client>,
 }
 
-#[deriving(RustcEncodable, RustcDecodable, Show, PartialEq)]
+#[derive(RustcEncodable, RustcDecodable, Show, PartialEq)]
 pub struct Client {
     pub iden: Iden,
     pub image_url: Url,
@@ -129,7 +129,7 @@ pub struct Client {
     pub website_url: Url,
 }
 
-#[deriving(Show, PartialEq)]
+#[derive(Show, PartialEq)]
 pub struct Push {
     pub iden: Iden,
     pub active: bool,
@@ -238,7 +238,7 @@ impl PbObj for Client {
     fn root_uri(_: Option<Client>) -> &'static str { "clients" }
 }
 
-#[deriving(Show, PartialEq)]
+#[derive(Show, PartialEq)]
 pub struct ListItem(bool, String);
 
 impl FromStr for ListItem {
@@ -302,7 +302,7 @@ impl<S: Decoder<E>, E> Decodable<S, E> for ListItem {
     }
 }
 
-#[deriving(Show, PartialEq)]
+#[derive(Show, PartialEq)]
 pub enum PushData {
     Empty,
     Note,
@@ -370,7 +370,7 @@ impl<S: Decoder<E>, E> Decodable<S, E> for PushData {
     }
 }
 
-#[deriving(Show, PartialEq, RustcDecodable)]
+#[derive(Show, PartialEq, RustcDecodable)]
 pub struct Channel {
     pub iden: Iden,
     pub active: bool,
@@ -388,7 +388,7 @@ impl PbObj for Channel {
     fn root_uri(_: Option<Channel>) -> &'static str { "channels" }
 }
 
-#[deriving(Show, PartialEq, RustcDecodable)]
+#[derive(Show, PartialEq, RustcDecodable)]
 pub struct ChannelInfo {
     pub iden: Iden,
     pub tag: String,
@@ -398,7 +398,7 @@ pub struct ChannelInfo {
     pub website_url: Option<Url>,
 }
 
-#[deriving(Show, PartialEq, RustcDecodable)]
+#[derive(Show, PartialEq, RustcDecodable)]
 pub struct Subscription {
     pub iden: Iden,
     pub active: bool,
@@ -411,7 +411,7 @@ impl PbObj for Subscription {
     fn root_uri(_: Option<Subscription>) -> &'static str { "subscriptions" }
 }
 
-#[deriving(Show, PartialEq, RustcDecodable)]
+#[derive(Show, PartialEq, RustcDecodable)]
 pub struct Envelope {
     //aliases: Vec<Alias>,
     pub channels: Option<Vec<Channel>>,
@@ -491,7 +491,7 @@ impl Envelope {
     }
 }
 
-#[deriving(Show, PartialEq)]
+#[derive(Show, PartialEq)]
 pub struct Error {
     message: String,
     typ: String,

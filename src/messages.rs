@@ -10,7 +10,7 @@ pub trait PbMsg {
     fn root_uri(_: Option<Self>) -> &'static str;
 }
 
-#[deriving(PartialEq, Show)]
+#[derive(PartialEq, Show)]
 pub enum TargetIden {
     CurrentUser,
     DeviceIden(Iden),
@@ -19,7 +19,7 @@ pub enum TargetIden {
     ClientIden(Iden),
 }
 
-#[deriving(PartialEq, Show)]
+#[derive(PartialEq, Show)]
 pub struct PushMsg {
     pub title: Option<String>,
     pub body: Option<String>,
@@ -53,7 +53,7 @@ impl<S: Encoder<E>, E> Encodable<S, E> for PushMsg {
     }
 }
 
-#[deriving(PartialEq, Show)]
+#[derive(PartialEq, Show)]
 pub struct DeviceMsg {
     pub nickname: String,
     pub typ: String,
@@ -74,7 +74,7 @@ impl<S:Encoder<E>, E> Encodable<S, E> for DeviceMsg {
     }
 }
 
-#[deriving(PartialEq, Show, RustcEncodable)]
+#[derive(PartialEq, Show, RustcEncodable)]
 pub struct ContactMsg {
     pub name: String,
     pub email: String,

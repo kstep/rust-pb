@@ -29,7 +29,7 @@ pub struct PbAPI {
     api_key: String,
 }
 
-#[deriving(Show)]
+#[derive(Show)]
 pub enum PbError {
     Io(IoError),
     Pb(Error),

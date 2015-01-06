@@ -9,8 +9,8 @@ enum Event {
     Push(Push)
 }
 
-impl<S: Decoder<E>, E> Decodable<S, E> for Event {
-    fn decode(decoder: &mut S) -> Result<Event, E> {
+impl Decodable for Event {
+    fn decode<S: Decoder>(decoder: &mut S) -> Result<Event, S::Error> {
         decoder.read_struct("Event", 0, |d| {
             match try!(d.read_struct_field("type", 0, |d| d.read_str()))[] {
                 "nop" => Ok(Event::Nop),

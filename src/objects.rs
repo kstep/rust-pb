@@ -57,8 +57,8 @@ pub struct Device {
     typ: String, // type
 }
 
-impl<S: Encoder<E>, E> Encodable<S, E> for Device {
-    fn encode(&self, encoder: &mut S) -> Result<(), E> {
+impl Encodable for Device {
+    fn encode<S: Encoder>(&self, encoder: &mut S) -> Result<(), S::Error> {
         encoder.emit_struct("Device", 0, |e| {
             try!(e.emit_struct_field("app_version", 0u, |e| self.app_version.encode(e)));
             try!(e.emit_struct_field("created", 1u, |e| self.created.encode(e)));
@@ -78,8 +78,8 @@ impl<S: Encoder<E>, E> Encodable<S, E> for Device {
     }
 }
 
-impl<S: Decoder<E>, E> Decodable<S, E> for Device {
-    fn decode(decoder: &mut S) -> Result<Device, E> {
+impl Decodable for Device {
+    fn decode<S: Decoder>(decoder: &mut S) -> Result<Device, S::Error> {
         decoder.read_struct("Device", 0, |d| {
             Ok(Device {
                 app_version: try!(d.read_struct_field("app_version", 0, |d| Decodable::decode(d))),
@@ -157,8 +157,8 @@ pub struct Push {
     pub data: PushData,
 }
 
-impl<S: Decoder<E>, E> Decodable<S, E> for Push {
-    fn decode(decoder: &mut S) -> Result<Push, E> {
+impl Decodable for Push {
+    fn decode<S: Decoder>(decoder: &mut S) -> Result<Push, S::Error> {
         decoder.read_struct("Push", 0, |d| {
             Ok(Push {
                 iden: try!(d.read_struct_field("iden", 0, |d| Decodable::decode(d))),
@@ -190,8 +190,8 @@ impl<S: Decoder<E>, E> Decodable<S, E> for Push {
     }
 }
 
-impl<S: Encoder<E>, E> Encodable<S, E> for Push {
-    fn encode(&self, encoder: &mut S) -> Result<(), E> {
+impl Encodable for Push {
+    fn encode<S: Encoder>(&self, encoder: &mut S) -> Result<(), S::Error> {
         encoder.emit_struct("Push", 0, |e| {
             try!(e.emit_struct_field("iden", 0u, |e| self.iden.encode(e)));
             try!(e.emit_struct_field("active", 1u, |e| self.active.encode(e)));
@@ -279,8 +279,8 @@ impl ListItem {
     }
 }
 
-impl<S: Encoder<E>, E> Encodable<S, E> for ListItem {
-    fn encode(&self, encoder: &mut S) -> Result<(), E> {
+impl Encodable for ListItem {
+    fn encode<S: Encoder>(&self, encoder: &mut S) -> Result<(), S::Error> {
         match *self {
             ListItem(checked, ref text) => encoder.emit_struct("ListItem", 0, |e| {
                 try!(e.emit_struct_field("checked", 0u, |e| e.emit_bool(checked)));
@@ -291,8 +291,8 @@ impl<S: Encoder<E>, E> Encodable<S, E> for ListItem {
     }
 }
 
-impl<S: Decoder<E>, E> Decodable<S, E> for ListItem {
-    fn decode(decoder: &mut S) -> Result<ListItem, E> {
+impl Decodable for ListItem {
+    fn decode<S: Decoder>(decoder: &mut S) -> Result<ListItem, S::Error> {
         decoder.read_struct("root", 0, |d| {
             Ok(ListItem(
                 try!(d.read_struct_field("checked", 0, |d| Decodable::decode(d))),
@@ -314,8 +314,8 @@ pub enum PushData {
     Mirror,
 }
 
-impl<S: Encoder<E>, E> Encodable<S, E> for PushData {
-    fn encode(&self, encoder: &mut S) -> Result<(), E> {
+impl Encodable for PushData {
+    fn encode<S: Encoder>(&self, encoder: &mut S) -> Result<(), S::Error> {
         match *self {
             PushData::Empty => (),
             PushData::Mirror => try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("mirror"))),
@@ -345,8 +345,8 @@ impl<S: Encoder<E>, E> Encodable<S, E> for PushData {
     }
 }
 
-impl<S: Decoder<E>, E> Decodable<S, E> for PushData {
-    fn decode(decoder: &mut S) -> Result<PushData, E> {
+impl Decodable for PushData {
+    fn decode<S: Decoder>(decoder: &mut S) -> Result<PushData, S::Error> {
         let typ: Option<String> = try!(decoder.read_struct_field("type", 0, |d| d.read_option(|d, b| if b { d.read_str().map(|v| Some(v)) } else { Ok(None) })));
 
         Ok(match typ {
@@ -503,8 +503,8 @@ impl error::Error for Error {
     fn detail(&self) -> Option<String> { Some(self.message.clone()) }
 }
 
-impl<S: Decoder<E>, E> Decodable<S, E> for Error {
-    fn decode(decoder: &mut S) -> Result<Error, E> {
+impl Decodable for Error {
+    fn decode<S: Decoder>(decoder: &mut S) -> Result<Error, S::Error> {
         decoder.read_struct("Error", 0, |d| {
             Ok(Error {
                 message: try!(d.read_struct_field("message", 0, |d| Decodable::decode(d))),

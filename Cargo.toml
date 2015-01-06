@@ -11,6 +11,6 @@ url = "*"
 #[dependencies.websocket]
 #git = "https://github.com/kstep/rust-websocket.git"
 
-[dependencies.http]
-git = "https://github.com/chris-morgan/rust-http.git"
+[dependencies.hyper]
+git = "https://github.com/hyperium/hyper.git"
 

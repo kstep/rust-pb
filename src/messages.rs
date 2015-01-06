@@ -34,8 +34,8 @@ impl PbMsg for PushMsg {
     fn root_uri(_: Option<Self>) -> &'static str { "pushes" }
 }
 
-impl<S: Encoder<E>, E> Encodable<S, E> for PushMsg {
-    fn encode(&self, encoder: &mut S) -> Result<(), E> {
+impl Encodable for PushMsg {
+    fn encode<S: Encoder>(&self, encoder: &mut S) -> Result<(), S::Error> {
         encoder.emit_struct("PushMsg", 0, |e| {
             try!(e.emit_struct_field("title", 0u, |e| self.title.encode(e)));
             try!(e.emit_struct_field("body", 1u, |e| self.body.encode(e)));
@@ -64,8 +64,8 @@ impl PbMsg for DeviceMsg {
     fn root_uri(_: Option<Self>) -> &'static str { "pushes" }
 }
 
-impl<S:Encoder<E>, E> Encodable<S, E> for DeviceMsg {
-    fn encode(&self, encoder: &mut S) -> Result<(), E> {
+impl Encodable for DeviceMsg {
+    fn encode<S: Encoder>(&self, encoder: &mut S) -> Result<(), S::Error> {
         encoder.emit_struct("DeviceMsg", 0, |e| {
             try!(e.emit_struct_field("nickname", 0u, |e| self.nickname.encode(e)));
             try!(e.emit_struct_field("type", 1u, |e| self.typ.encode(e)));

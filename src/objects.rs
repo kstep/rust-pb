@@ -10,7 +10,7 @@ pub type Iden = String;
 pub type Cursor = String;
 pub type Timestamp = f64;
 
-pub trait PbObj : Sized {
+pub trait PbObj : Decodable + Sized {
     //fn uri(&self) -> String { format!("{}/{}", PbObj::root_uri(None::<Self>), self.iden()) }
     fn root_uri(_: Option<Self>) -> &'static str;
 }
@@ -425,41 +425,25 @@ pub struct Envelope {
     pub error: Option<Error>,
 }
 
-pub trait ToPbResult<R: PbObj> : Sized {
-    fn result(self) -> Option<Result<(Vec<R>, Option<Cursor>), Error>> {
-        None
-    }
-    fn ok(self) -> Option<(Vec<R>, Option<Cursor>)> {
-        match self.result() {
-            Some(Ok(r)) => Some(r),
-            _ => None
-        }
-    }
-    fn err(self) -> Option<Error> {
-        match self.result() {
-            Some(Err(e)) => Some(e),
-            _ => None
-        }
-    }
+pub trait FromEnvelope : Sized {
+    #[allow(unused_variables)]
+    fn from_env(env: Envelope) -> Option<(Vec<Self>, Option<Cursor>)> { None }
 }
 
-macro_rules! to_pb_result_impl {
+macro_rules! from_envelope_impl {
     ($(($t:ty, $f:ident)),+) => {
-        $(impl ToPbResult<$t> for Envelope {
-            fn result(self) -> Option<Result<(Vec<$t>, Option<Cursor>), Error>> {
-                match self.$f {
-                    Some(xs) => Some(Ok((xs, self.cursor))),
-                    None => match self.error {
-                        Some(e) => Some(Err(e)),
-                        None => None
-                    }
+        $(impl FromEnvelope for $t {
+            #[inline] fn from_env(env: Envelope) -> Option<(Vec<$t>, Option<Cursor>)> {
+                match env.$f {
+                    Some(v) => Some((v, env.cursor)),
+                    None => None
                 }
             }
         })+
     }
 }
 
-to_pb_result_impl! {
+from_envelope_impl! {
     (Channel, channels),
     (Client, clients),
     (Device, devices),
@@ -488,6 +472,13 @@ impl Envelope {
     }
     pub fn is_err(&self) -> bool {
         self.error.is_some()
+    }
+
+    pub fn get<T: FromEnvelope>(self) -> Result<(Vec<T>, Option<Cursor>), Error> {
+        match self.error {
+            Some(_) => Err(self.error.unwrap()),
+            None => Ok(FromEnvelope::from_env(self).unwrap())
+        }
     }
 }
 

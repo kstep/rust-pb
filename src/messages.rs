@@ -5,9 +5,8 @@ use objects::{Iden, PushData};
 #[cfg(test)]
 use rustc_serialize::json;
 
-pub trait PbMsg {
-    //type Obj;
-    fn root_uri(_: Option<Self>) -> &'static str;
+pub trait PbMsg : Encodable {
+    type Obj: super::objects::PbObj;
 }
 
 #[derive(PartialEq, Show)]
@@ -30,8 +29,7 @@ pub struct PushMsg {
 }
 
 impl PbMsg for PushMsg {
-    //type Obj = super::objects::Push;
-    fn root_uri(_: Option<Self>) -> &'static str { "pushes" }
+    type Obj = super::objects::Push;
 }
 
 impl Encodable for PushMsg {
@@ -60,8 +58,7 @@ pub struct DeviceMsg {
 }
 
 impl PbMsg for DeviceMsg {
-    //type Obj = super::objects::Device;
-    fn root_uri(_: Option<Self>) -> &'static str { "pushes" }
+    type Obj = super::objects::Device;
 }
 
 impl Encodable for DeviceMsg {
@@ -81,8 +78,7 @@ pub struct ContactMsg {
 }
 
 impl PbMsg for ContactMsg {
-    //type Obj = super::objects::Contact;
-    fn root_uri(_: Option<Self>) -> &'static str { "pushes" }
+    type Obj = super::objects::Contact;
 }
 
 #[test]

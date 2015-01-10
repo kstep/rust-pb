@@ -83,29 +83,29 @@ impl PbAPI {
     }
 
     fn get(&mut self, path: &str, params: &[(&str, &str)]) -> HttpResult<String> {
-        let url = format!("{}{}?{}", BASE_URL, path, params.iter().filter(|v| v.1 != "").map(|&(k, v)| format!("{}={}&", k, v)).fold("".to_string(), |acc, item| acc + item[]));
+        let url = format!("{}{}?{}", BASE_URL, path, params.iter().filter(|v| v.1 != "").map(|&(k, v)| format!("{}={}&", k, v)).fold(String::new(), |acc, item| acc + &*item));
         self.client
-            .get(url[])
+            .get(&*url)
             .header(Authorization(Basic { username: self.api_key.clone(), password: None }))
             .send()
-            .and_then(|mut r| r.read_to_string().map_err(FromError::from_error))
+            .and_then(|&: mut r| r.read_to_string().map_err(FromError::from_error))
     }
 
     fn post(&mut self, path: &str, content: &str) -> HttpResult<String> {
         let url = format!("{}{}", BASE_URL, path);
         self.client
-            .post(url[])
+            .post(&*url)
             .header(Authorization(Basic { username: self.api_key.clone(), password: None }))
             .header(ContentType("application/json".parse().unwrap()))
             .body(content)
             .send()
-            .and_then(|mut r| r.read_to_string().map_err(FromError::from_error))
+            .and_then(|&: mut r| r.read_to_string().map_err(FromError::from_error))
     }
 
     fn delete(&mut self, path: &str) -> HttpResult<()> {
         let url = format!("{}{}", BASE_URL, path);
         self.client
-            .delete(url[])
+            .delete(&*url)
             .header(Authorization(Basic { username: self.api_key.clone(), password: None }))
             .send()
             .map(|_| ())
@@ -114,10 +114,10 @@ impl PbAPI {
     // Eventually (when RFC 195 is completed) only T: PbMsg (PbObj) type parameter will be needed,
     // and T::Obj will be used and the second type.
     pub fn send<T: PbMsg>(&mut self, msg: &T) -> PbResult<T::Obj> {
-        let resp = try!(self.post(PbObj::root_uri(None::<T::Obj>), json::encode(msg)[]));
-        match json::decode(resp[]) {
+        let resp = try!(self.post(PbObj::root_uri(None::<T::Obj>), &*json::encode(msg)));
+        match json::decode(&*resp) {
             Ok(o) => Ok(o),
-            Err(e) => Err(match json::decode::<Error>(resp[]) {
+            Err(e) => Err(match json::decode::<Error>(&*resp) {
                 Ok(err) => FromError::from_error(err),
                 Err(_) => FromError::from_error(e)
             })
@@ -125,23 +125,23 @@ impl PbAPI {
     }
 
     pub fn remove<O: PbObj>(&mut self, iden: Iden) -> PbResult<()> {
-        try!(self.delete(format!("{}/{}", PbObj::root_uri(None::<O>), iden)[]));
+        try!(self.delete(&*format!("{}/{}", PbObj::root_uri(None::<O>), iden)));
         Ok(())
     }
 
-    #[inline] fn _load<R: PbObj + FromEnvelope>(&mut self, obj: &str, limit: Option<uint>, since: Option<Timestamp>, cursor: Option<Cursor>) -> PbResult<PbVec<R>> {
+    #[inline] fn _load<R: PbObj + FromEnvelope>(&mut self, obj: &str, limit: Option<usize>, since: Option<Timestamp>, cursor: Option<Cursor>) -> PbResult<PbVec<R>> {
         let l = limit.map(|v| v.to_string()).unwrap_or("".to_string());
         let s = since.map(|v| v.to_string()).unwrap_or("".to_string());
         let c = cursor.map(|v| v.to_string()).unwrap_or("".to_string());
-        let result = try!(self.get(obj, qs![limit -> l[], modified_after -> s[], cursor -> c[]][]));
-        let env = try!(json::decode::<Envelope>(result[]));
+        let result = try!(self.get(obj, &*qs![limit -> &*l, modified_after -> &*s, cursor -> &*c]));
+        let env = try!(json::decode::<Envelope>(&*result));
         env.get::<R>().map_err(FromError::from_error)
     }
 
     pub fn load_by_iden<R: PbObj>(&mut self, iden: Iden) -> PbResult<R> {
         let url = format!("{}/{}", PbObj::root_uri(None::<R>), iden);
-        let result = try!(self.get(url[], &[]));
-        Ok(try!(json::decode(result[])))
+        let result = try!(self.get(&*url, &[]));
+        Ok(try!(json::decode(&*result)))
     }
 
     pub fn load_since<R: PbObj + FromEnvelope>(&mut self, since: Timestamp) -> PbResult<PbVec<R>> {
@@ -156,15 +156,15 @@ impl PbAPI {
         self._load::<R>(PbObj::root_uri(None::<R>), None, None, None)
     }
 
-    pub fn loadn<R: PbObj + FromEnvelope>(&mut self, limit: uint) -> PbResult<PbVec<R>> {
+    pub fn loadn<R: PbObj + FromEnvelope>(&mut self, limit: usize) -> PbResult<PbVec<R>> {
         self._load::<R>(PbObj::root_uri(None::<R>), Some(limit), None, None)
     }
 
-    pub fn loadn_from<R: PbObj + FromEnvelope>(&mut self, limit: uint, cursor: Cursor) -> PbResult<PbVec<R>> {
+    pub fn loadn_from<R: PbObj + FromEnvelope>(&mut self, limit: usize, cursor: Cursor) -> PbResult<PbVec<R>> {
         self._load::<R>(PbObj::root_uri(None::<R>), Some(limit), None, Some(cursor))
     }
 
-    pub fn loadn_since<R: PbObj + FromEnvelope>(&mut self, limit: uint, since: Timestamp) -> PbResult<PbVec<R>> {
+    pub fn loadn_since<R: PbObj + FromEnvelope>(&mut self, limit: usize, since: Timestamp) -> PbResult<PbVec<R>> {
         self._load::<R>(PbObj::root_uri(None::<R>), Some(limit), Some(since), None)
     }
 }

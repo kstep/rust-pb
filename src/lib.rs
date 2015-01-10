@@ -3,10 +3,9 @@
 #![crate_type = "dylib"]
 #![crate_type = "rlib"]
 
-#![feature(macro_rules)]
 #![feature(slicing_syntax)]
-#![feature(associated_types)]
 #![feature(old_orphan_check)]
+#![allow(unstable)]
 
 extern crate hyper;
 //extern crate websocket;

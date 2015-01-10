@@ -35,15 +35,15 @@ impl PbMsg for PushMsg {
 impl Encodable for PushMsg {
     fn encode<S: Encoder>(&self, encoder: &mut S) -> Result<(), S::Error> {
         encoder.emit_struct("PushMsg", 0, |e| {
-            try!(e.emit_struct_field("title", 0u, |e| self.title.encode(e)));
-            try!(e.emit_struct_field("body", 1u, |e| self.body.encode(e)));
-            try!(e.emit_struct_field("source_device_iden", 2u, |e| self.source_device_iden.encode(e)));
+            try!(e.emit_struct_field("title", 0, |e| self.title.encode(e)));
+            try!(e.emit_struct_field("body", 1, |e| self.body.encode(e)));
+            try!(e.emit_struct_field("source_device_iden", 2, |e| self.source_device_iden.encode(e)));
             try!(match self.target {
                 TargetIden::CurrentUser => Ok(()),
-                TargetIden::DeviceIden(ref iden) => e.emit_struct_field("device_iden", 3u, |e| e.emit_str(iden[])),
-                TargetIden::ContactEmail(ref email) => e.emit_struct_field("email", 3u, |e| e.emit_str(email[])),
-                TargetIden::ChannelTag(ref tag) => e.emit_struct_field("channel_tag", 3u, |e| e.emit_str(tag[])),
-                TargetIden::ClientIden(ref iden) => e.emit_struct_field("client_iden", 3u, |e| e.emit_str(iden[])),
+                TargetIden::DeviceIden(ref iden) => e.emit_struct_field("device_iden", 3, |e| e.emit_str(&**iden)),
+                TargetIden::ContactEmail(ref email) => e.emit_struct_field("email", 3, |e| e.emit_str(&**email)),
+                TargetIden::ChannelTag(ref tag) => e.emit_struct_field("channel_tag", 3, |e| e.emit_str(&**tag)),
+                TargetIden::ClientIden(ref iden) => e.emit_struct_field("client_iden", 3, |e| e.emit_str(&**iden)),
             });
             try!(self.data.encode(e));
             Ok(())
@@ -64,8 +64,8 @@ impl PbMsg for DeviceMsg {
 impl Encodable for DeviceMsg {
     fn encode<S: Encoder>(&self, encoder: &mut S) -> Result<(), S::Error> {
         encoder.emit_struct("DeviceMsg", 0, |e| {
-            try!(e.emit_struct_field("nickname", 0u, |e| self.nickname.encode(e)));
-            try!(e.emit_struct_field("type", 1u, |e| self.typ.encode(e)));
+            try!(e.emit_struct_field("nickname", 0, |e| self.nickname.encode(e)));
+            try!(e.emit_struct_field("type", 1, |e| self.typ.encode(e)));
             Ok(())
         })
     }
@@ -91,7 +91,7 @@ fn test_push_msg_encode() {
         data: PushData::Note,
         source_device_iden: None,
     };
-    assert_eq!(json::encode(&push)[], "{\"title\":\"Note Title\",\"body\":\"Note Body\",\"source_device_iden\":null,\"device_iden\":\"udx234acsdc\",\"type\":\"note\"}");
+    assert_eq!(&*json::encode(&push), "{\"title\":\"Note Title\",\"body\":\"Note Body\",\"source_device_iden\":null,\"device_iden\":\"udx234acsdc\",\"type\":\"note\"}");
 }
 
 #[test]
@@ -100,5 +100,5 @@ fn test_device_msg_encode() {
         nickname: "Nickname".to_string(),
         typ: "stream".to_string()
     };
-    assert_eq!(json::encode(&device)[], "{\"nickname\":\"Nickname\",\"type\":\"stream\"}");
+    assert_eq!(&*json::encode(&device), "{\"nickname\":\"Nickname\",\"type\":\"stream\"}");
 }

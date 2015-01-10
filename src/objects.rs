@@ -42,7 +42,7 @@ pub struct Account {
 
 #[derive(Show, PartialEq)]
 pub struct Device {
-    app_version: Option<uint>,
+    app_version: Option<usize>,
     created: Timestamp,
     modified: Timestamp,
     active: bool,
@@ -60,19 +60,19 @@ pub struct Device {
 impl Encodable for Device {
     fn encode<S: Encoder>(&self, encoder: &mut S) -> Result<(), S::Error> {
         encoder.emit_struct("Device", 0, |e| {
-            try!(e.emit_struct_field("app_version", 0u, |e| self.app_version.encode(e)));
-            try!(e.emit_struct_field("created", 1u, |e| self.created.encode(e)));
-            try!(e.emit_struct_field("modified", 2u, |e| self.modified.encode(e)));
-            try!(e.emit_struct_field("active", 3u, |e| self.active.encode(e)));
-            try!(e.emit_struct_field("pushable", 4u, |e| self.pushable.encode(e)));
-            try!(e.emit_struct_field("iden", 5u, |e| self.iden.encode(e)));
-            try!(e.emit_struct_field("push_token", 6u, |e| self.push_token.encode(e)));
-            try!(e.emit_struct_field("fingerprint", 7u, |e| self.fingerprint.encode(e)));
-            try!(e.emit_struct_field("nickname", 8u, |e| self.nickname.encode(e)));
-            try!(e.emit_struct_field("manufacturer", 9u, |e| self.manufacturer.encode(e)));
-            try!(e.emit_struct_field("model", 10u, |e| self.model.encode(e)));
-            try!(e.emit_struct_field("kind", 11u, |e| self.kind.encode(e)));
-            try!(e.emit_struct_field("type", 12u, |e| self.typ.encode(e)));
+            try!(e.emit_struct_field("app_version", 0, |e| self.app_version.encode(e)));
+            try!(e.emit_struct_field("created", 1, |e| self.created.encode(e)));
+            try!(e.emit_struct_field("modified", 2, |e| self.modified.encode(e)));
+            try!(e.emit_struct_field("active", 3, |e| self.active.encode(e)));
+            try!(e.emit_struct_field("pushable", 4, |e| self.pushable.encode(e)));
+            try!(e.emit_struct_field("iden", 5, |e| self.iden.encode(e)));
+            try!(e.emit_struct_field("push_token", 6, |e| self.push_token.encode(e)));
+            try!(e.emit_struct_field("fingerprint", 7, |e| self.fingerprint.encode(e)));
+            try!(e.emit_struct_field("nickname", 8, |e| self.nickname.encode(e)));
+            try!(e.emit_struct_field("manufacturer", 9, |e| self.manufacturer.encode(e)));
+            try!(e.emit_struct_field("model", 10, |e| self.model.encode(e)));
+            try!(e.emit_struct_field("kind", 11, |e| self.kind.encode(e)));
+            try!(e.emit_struct_field("type", 12, |e| self.typ.encode(e)));
             Ok(())
         })
     }
@@ -193,23 +193,23 @@ impl Decodable for Push {
 impl Encodable for Push {
     fn encode<S: Encoder>(&self, encoder: &mut S) -> Result<(), S::Error> {
         encoder.emit_struct("Push", 0, |e| {
-            try!(e.emit_struct_field("iden", 0u, |e| self.iden.encode(e)));
-            try!(e.emit_struct_field("active", 1u, |e| self.active.encode(e)));
-            try!(e.emit_struct_field("dismissed", 2u, |e| self.dismissed.encode(e)));
-            try!(e.emit_struct_field("created", 3u, |e| self.created.encode(e)));
-            try!(e.emit_struct_field("modified", 4u, |e| self.modified.encode(e)));
-            try!(e.emit_struct_field("title", 5u, |e| self.title.encode(e)));
-            try!(e.emit_struct_field("body", 6u, |e| self.body.encode(e)));
-            try!(e.emit_struct_field("receiver_name", 7u, |e| self.receiver_name.encode(e)));
-            try!(e.emit_struct_field("receiver_iden", 8u, |e| self.receiver_iden.encode(e)));
-            try!(e.emit_struct_field("receiver_email", 9u, |e| self.receiver_email.encode(e)));
-            try!(e.emit_struct_field("receiver_email_normalized", 10u, |e| self.receiver_email_normalized.encode(e)));
-            try!(e.emit_struct_field("sender_name", 11u, |e| self.sender_name.encode(e)));
-            try!(e.emit_struct_field("sender_email", 12u, |e| self.sender_email.encode(e)));
-            try!(e.emit_struct_field("sender_email_normalized", 13u, |e| self.sender_email_normalized.encode(e)));
-            try!(e.emit_struct_field("sender_iden", 14u, |e| self.sender_iden.encode(e)));
-            try!(e.emit_struct_field("target_device_iden", 15u, |e| self.target_device_iden.encode(e)));
-            try!(e.emit_struct_field("source_device_iden", 15u, |e| self.source_device_iden.encode(e)));
+            try!(e.emit_struct_field("iden", 0, |e| self.iden.encode(e)));
+            try!(e.emit_struct_field("active", 1, |e| self.active.encode(e)));
+            try!(e.emit_struct_field("dismissed", 2, |e| self.dismissed.encode(e)));
+            try!(e.emit_struct_field("created", 3, |e| self.created.encode(e)));
+            try!(e.emit_struct_field("modified", 4, |e| self.modified.encode(e)));
+            try!(e.emit_struct_field("title", 5, |e| self.title.encode(e)));
+            try!(e.emit_struct_field("body", 6, |e| self.body.encode(e)));
+            try!(e.emit_struct_field("receiver_name", 7, |e| self.receiver_name.encode(e)));
+            try!(e.emit_struct_field("receiver_iden", 8, |e| self.receiver_iden.encode(e)));
+            try!(e.emit_struct_field("receiver_email", 9, |e| self.receiver_email.encode(e)));
+            try!(e.emit_struct_field("receiver_email_normalized", 10, |e| self.receiver_email_normalized.encode(e)));
+            try!(e.emit_struct_field("sender_name", 11, |e| self.sender_name.encode(e)));
+            try!(e.emit_struct_field("sender_email", 12, |e| self.sender_email.encode(e)));
+            try!(e.emit_struct_field("sender_email_normalized", 13, |e| self.sender_email_normalized.encode(e)));
+            try!(e.emit_struct_field("sender_iden", 14, |e| self.sender_iden.encode(e)));
+            try!(e.emit_struct_field("target_device_iden", 15, |e| self.target_device_iden.encode(e)));
+            try!(e.emit_struct_field("source_device_iden", 15, |e| self.source_device_iden.encode(e)));
 
             try!(self.data.encode(e));
 
@@ -283,8 +283,8 @@ impl Encodable for ListItem {
     fn encode<S: Encoder>(&self, encoder: &mut S) -> Result<(), S::Error> {
         match *self {
             ListItem(checked, ref text) => encoder.emit_struct("ListItem", 0, |e| {
-                try!(e.emit_struct_field("checked", 0u, |e| e.emit_bool(checked)));
-                try!(e.emit_struct_field("text", 1u, |e| e.emit_str(text[])));
+                try!(e.emit_struct_field("checked", 0, |e| e.emit_bool(checked)));
+                try!(e.emit_struct_field("text", 1, |e| e.emit_str(&**text)));
                 Ok(())
             })
         }
@@ -318,27 +318,27 @@ impl Encodable for PushData {
     fn encode<S: Encoder>(&self, encoder: &mut S) -> Result<(), S::Error> {
         match *self {
             PushData::Empty => (),
-            PushData::Mirror => try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("mirror"))),
-            PushData::Dismissal => try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("dismissal"))),
-            PushData::Note => try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("note"))),
+            PushData::Mirror => try!(encoder.emit_struct_field("type", 100, |e| e.emit_str("mirror"))),
+            PushData::Dismissal => try!(encoder.emit_struct_field("type", 100, |e| e.emit_str("dismissal"))),
+            PushData::Note => try!(encoder.emit_struct_field("type", 100, |e| e.emit_str("note"))),
             PushData::Link(ref url) => {
-                try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("link")));
-                try!(encoder.emit_struct_field("url", 101u, |e| url.encode(e)));
+                try!(encoder.emit_struct_field("type", 100, |e| e.emit_str("link")));
+                try!(encoder.emit_struct_field("url", 101, |e| url.encode(e)));
             },
             PushData::File(ref name, ref mime, ref url, ref img) => {
-                try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("file")));
-                try!(encoder.emit_struct_field("file_name", 101u, |e| name.encode(e)));
-                try!(encoder.emit_struct_field("file_type", 102u, |e| mime.encode(e)));
-                try!(encoder.emit_struct_field("file_url", 103u, |e| url.encode(e)));
-                try!(encoder.emit_struct_field("image_url", 104u, |e| img.encode(e)));
+                try!(encoder.emit_struct_field("type", 100, |e| e.emit_str("file")));
+                try!(encoder.emit_struct_field("file_name", 101, |e| name.encode(e)));
+                try!(encoder.emit_struct_field("file_type", 102, |e| mime.encode(e)));
+                try!(encoder.emit_struct_field("file_url", 103, |e| url.encode(e)));
+                try!(encoder.emit_struct_field("image_url", 104, |e| img.encode(e)));
             },
             PushData::List(ref items) => {
-                try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("list")));
-                try!(encoder.emit_struct_field("items", 101u, |e| items.encode(e)));
+                try!(encoder.emit_struct_field("type", 100, |e| e.emit_str("list")));
+                try!(encoder.emit_struct_field("items", 101, |e| items.encode(e)));
             },
             PushData::Address(ref address) => {
-                try!(encoder.emit_struct_field("type", 100u, |e| e.emit_str("address")));
-                try!(encoder.emit_struct_field("address", 101u, |e| address.encode(e)));
+                try!(encoder.emit_struct_field("type", 100, |e| e.emit_str("address")));
+                try!(encoder.emit_struct_field("address", 101, |e| address.encode(e)));
             },
         }
         Ok(())
@@ -350,7 +350,7 @@ impl Decodable for PushData {
         let typ: Option<String> = try!(decoder.read_struct_field("type", 0, |d| d.read_option(|d, b| if b { d.read_str().map(|v| Some(v)) } else { Ok(None) })));
 
         Ok(match typ {
-            Some(ref t) => match t[] {
+            Some(ref t) => match &**t {
                 "note" => PushData::Note,
                 "link" => PushData::Link(try!(decoder.read_struct_field("url", 0, |d| Decodable::decode(d)))),
                 "file" => PushData::File(
@@ -363,7 +363,7 @@ impl Decodable for PushData {
                 "address" => PushData::Address(try!(decoder.read_struct_field("address", 0, |d| Decodable::decode(d)))),
                 "mirror" => PushData::Mirror,
                 "dismissal" => PushData::Dismissal,
-                typ @ _ => return Err(decoder.error(format!("Unknown type: {}", typ)[]))
+                typ @ _ => return Err(decoder.error(&*format!("Unknown type: {:?}", typ)))
             },
             _ => PushData::Empty
         })

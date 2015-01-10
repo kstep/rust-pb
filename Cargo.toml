@@ -3,6 +3,10 @@
 name = "pb"
 version = "0.0.1"
 authors = ["Konstantin Stepanov <me@kstep.me>"]
+description = "Client library to work with Pushbullet REST API"
+homepage = "https://github.com/kstep/rust-pb"
+repository = "https://github.com/kstep/rust-pb.git"
+license = "MIT"
 
 [dependencies]
 rustc-serialize = "*"

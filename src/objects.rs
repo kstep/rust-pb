@@ -3,9 +3,6 @@ use url::Url;
 use rustc_serialize::{Encodable, Decodable, Encoder, Decoder};
 use std::error;
 
-#[cfg(test)]
-use rustc_serialize::json;
-
 pub type Iden = String;
 pub type Cursor = String;
 pub type Timestamp = f64;
@@ -506,220 +503,235 @@ impl Decodable for Error {
     }
 }
 
-#[test]
-fn test_note_push_decode() {
-    let example = "{
-        \"iden\": \"ubdpj29aOK0sKG\",
-        \"type\": \"note\",
-        \"title\": \"Note Title\",
-        \"body\": \"Note Body\",
-        \"created\": 1399253701.9744401,
-        \"modified\": 1399253701.9746201,
-        \"active\": true,
-        \"dismissed\": false,
-        \"sender_iden\": \"ubd\",
-        \"sender_email\": \"ryan@pushbullet.com\",
-        \"sender_email_normalized\": \"ryan@pushbullet.com\",
-        \"receiver_iden\": \"ubd\",
-        \"receiver_email\": \"ryan@pushbullet.com\",
-        \"receiver_email_normalized\": \"ryan@pushbullet.com\"
-    }";
-    let push: Result<Push, _> = json::decode(example);
-    match push {
-        Ok(ref p) => assert_eq!(*p, Push {
-            iden: "ubdpj29aOK0sKG".to_string(),
-            active: true,
-            dismissed: false,
-            created: 1399253701f64,
-            modified: 1399253701f64,
+#[cfg(test)]
+#[allow(unstable)]
+mod tests {
+    use rustc_serialize::json;
+    use std::num::Float;
+    use super::{Error, Envelope, Account, PushData, ListItem, Push};
+    use url::Url;
 
-            title: Some("Note Title".to_string()),
-            body: Some("Note Body".to_string()),
+    #[test]
+    fn test_note_push_decode() {
+        let example = "{
+            \"iden\": \"ubdpj29aOK0sKG\",
+            \"type\": \"note\",
+            \"title\": \"Note Title\",
+            \"body\": \"Note Body\",
+            \"created\": 1399253701.9744401,
+            \"modified\": 1399253701.9746201,
+            \"active\": true,
+            \"dismissed\": false,
+            \"sender_iden\": \"ubd\",
+            \"sender_email\": \"ryan@pushbullet.com\",
+            \"sender_email_normalized\": \"ryan@pushbullet.com\",
+            \"receiver_iden\": \"ubd\",
+            \"receiver_email\": \"ryan@pushbullet.com\",
+            \"receiver_email_normalized\": \"ryan@pushbullet.com\"
+        }";
+        let push: Result<Push, _> = json::decode(example);
+        match push {
+            Ok(ref p) => assert_eq!(*p, Push {
+                iden: "ubdpj29aOK0sKG".to_string(),
+                active: true,
+                dismissed: false,
+                created: 1399253701.9744401,
+                modified: 1399253701.9746201,
 
-            receiver_name: None,
-            receiver_iden: Some("ubd".to_string()),
-            receiver_email: Some("ryan@pushbullet.com".to_string()),
-            receiver_email_normalized: Some("ryan@pushbullet.com".to_string()),
+                title: Some("Note Title".to_string()),
+                body: Some("Note Body".to_string()),
 
-            sender_name: None,
-            sender_iden: Some("ubd".to_string()),
-            sender_email: Some("ryan@pushbullet.com".to_string()),
-            sender_email_normalized: Some("ryan@pushbullet.com".to_string()),
+                receiver_name: None,
+                receiver_iden: Some("ubd".to_string()),
+                receiver_email: Some("ryan@pushbullet.com".to_string()),
+                receiver_email_normalized: Some("ryan@pushbullet.com".to_string()),
 
-            target_device_iden: None,
-            source_device_iden: None,
-            channel_iden: None,
+                sender_name: None,
+                sender_iden: Some("ubd".to_string()),
+                sender_email: Some("ryan@pushbullet.com".to_string()),
+                sender_email_normalized: Some("ryan@pushbullet.com".to_string()),
 
-            data: PushData::Note,
-        }),
-        Err(e) => panic!("Error: {}", e)
+                target_device_iden: None,
+                source_device_iden: None,
+                channel_iden: None,
+
+                data: PushData::Note,
+            }),
+            Err(e) => panic!("Error: {:?}", e)
+        }
     }
-}
 
-#[test]
-fn test_list_push_decode() {
-    let example = "{
-        \"iden\": \"ubdpjAkaGXvUl2\",
-        \"type\": \"list\",
-        \"title\": \"List Title\",
-        \"items\": [{\"checked\": true, \"text\": \"Item One\"}, {\"checked\": false, \"text\": \"Item Two\"}],
-        \"created\": 1411595195.1267679,
-        \"modified\": 1411699878.2501802,
-        \"active\": true,
-        \"dismissed\": false,
-        \"sender_iden\": \"ubd\",
-        \"sender_email\": \"ryan@pushbullet.com\",
-        \"sender_email_normalized\": \"ryan@pushbullet.com\",
-        \"receiver_iden\": \"ubd\",
-        \"receiver_email\": \"ryan@pushbullet.com\",
-        \"receiver_email_normalized\": \"ryan@pushbullet.com\"
-    }";
-    let push: Result<Push, _> = json::decode(example);
-    match push {
-        Ok(ref p) => assert_eq!(*p, Push {
-            iden: "ubdpjAkaGXvUl2".to_string(),
-            active: true,
-            dismissed: false,
-            created: 1411595195f64,
-            modified: 1411699878f64,
+    #[test]
+    fn test_list_push_decode() {
+        let example = "{
+            \"iden\": \"ubdpjAkaGXvUl2\",
+            \"type\": \"list\",
+            \"title\": \"List Title\",
+            \"items\": [{\"checked\": true, \"text\": \"Item One\"}, {\"checked\": false, \"text\": \"Item Two\"}],
+            \"created\": 1411595195.1267679,
+            \"modified\": 1411699878.2501802,
+            \"active\": true,
+            \"dismissed\": false,
+            \"sender_iden\": \"ubd\",
+            \"sender_email\": \"ryan@pushbullet.com\",
+            \"sender_email_normalized\": \"ryan@pushbullet.com\",
+            \"receiver_iden\": \"ubd\",
+            \"receiver_email\": \"ryan@pushbullet.com\",
+            \"receiver_email_normalized\": \"ryan@pushbullet.com\"
+        }";
+        let push: Result<Push, _> = json::decode(example);
+        match push {
+            Ok(ref p) => assert_eq!(*p, Push {
+                iden: "ubdpjAkaGXvUl2".to_string(),
+                active: true,
+                dismissed: false,
+                created: 1411595195.1267679,
+                modified: 1411699878.2501802,
 
-            title: Some("List Title".to_string()),
-            body: None,
+                title: Some("List Title".to_string()),
+                body: None,
 
-            receiver_name: None,
-            receiver_iden: Some("ubd".to_string()),
-            receiver_email: Some("ryan@pushbullet.com".to_string()),
-            receiver_email_normalized: Some("ryan@pushbullet.com".to_string()),
+                receiver_name: None,
+                receiver_iden: Some("ubd".to_string()),
+                receiver_email: Some("ryan@pushbullet.com".to_string()),
+                receiver_email_normalized: Some("ryan@pushbullet.com".to_string()),
 
-            sender_name: None,
-            sender_iden: Some("ubd".to_string()),
-            sender_email: Some("ryan@pushbullet.com".to_string()),
-            sender_email_normalized: Some("ryan@pushbullet.com".to_string()),
+                sender_name: None,
+                sender_iden: Some("ubd".to_string()),
+                sender_email: Some("ryan@pushbullet.com".to_string()),
+                sender_email_normalized: Some("ryan@pushbullet.com".to_string()),
 
-            source_device_iden: None,
-            target_device_iden: None,
-            channel_iden: None,
+                source_device_iden: None,
+                target_device_iden: None,
+                channel_iden: None,
 
-            data: PushData::List(vec![
-                "Item One".parse::<ListItem>().unwrap().checked(),
-                "Item Two".parse::<ListItem>().unwrap()
-            ]),
-        }),
-        Err(e) => panic!("Error: {}", e)
+                data: PushData::List(vec![
+                    "Item One".parse::<ListItem>().unwrap().checked(),
+                    "Item Two".parse::<ListItem>().unwrap()
+                ]),
+            }),
+            Err(e) => panic!("Error: {:?}", e)
+        }
     }
-}
 
-#[test]
-fn test_account_decode() {
-    let example = "{
-        \"iden\": \"udx234acsdc\",
-        \"created\": 1398342586.00574,
-        \"modified\": 1409046718.1501,
-        \"email\": \"me@kstep.me\",
-        \"email_normalized\": \"me@kstep.me\",
-        \"name\": \"Konstantin Stepanov\",
-        \"image_url\": \"https://lh5.googleusercontent.com/photo.jpg\",
-        \"preferences\": {
-            \"onboarding\":{
-                \"app\":false,
-                \"friends\": false,
-                \"extension\": false
+    #[test]
+    fn test_account_decode() {
+        let example = "{
+            \"iden\": \"udx234acsdc\",
+            \"created\": 1398342586.00574,
+            \"modified\": 1409046718.1501,
+            \"email\": \"me@kstep.me\",
+            \"email_normalized\": \"me@kstep.me\",
+            \"name\": \"Konstantin Stepanov\",
+            \"image_url\": \"https://lh5.googleusercontent.com/photo.jpg\",
+            \"preferences\": {
+                \"onboarding\":{
+                    \"app\":false,
+                    \"friends\": false,
+                    \"extension\": false
+                },
+                \"social\": false
             },
-            \"social\": false
-        },
-        \"api_key\": \"9aau3q49898u98me3q48u\"
-    }";
-    let account: Result<Account, _> = json::decode(example);
-    match account {
-        Ok(ref a) => assert_eq!(*a, Account {
+            \"api_key\": \"9aau3q49898u98me3q48u\"
+        }";
+        let account: Result<Account, _> = json::decode(example);
+        let expected = Account {
             iden: "udx234acsdc".to_string(),
-            created: 1398342586f64,
-            modified: 1409046718f64,
+            created: 1398342586.00574,
+            modified: 1409046718.1501,
             email: "me@kstep.me".to_string(),
             email_normalized: "me@kstep.me".to_string(),
             name: "Konstantin Stepanov".to_string(),
             image_url: Url::parse("https://lh5.googleusercontent.com/photo.jpg").unwrap(),
             //preferences: Map(...),
             api_key: "9aau3q49898u98me3q48u".to_string(),
-        }),
-        Err(e) => panic!("Error: {}", e)
-    }
-}
-
-#[test]
-fn test_decode_err_result() {
-    let error = "{
-        \"error\": {
-            \"message\": \"The resource could not be found.\",
-            \"type\": \"invalid_request\",
-            \"cat\": \"~(=^‥^)\"
+        };
+        match account {
+            Ok(ref a) => {
+                assert_eq!(a.iden, expected.iden);
+                assert!((a.created - expected.created).abs() < 0.0001);
+                assert!((a.modified - expected.modified).abs() < 0.0001);
+                assert_eq!(a.email, expected.email);
+                assert_eq!(a.email_normalized, expected.email_normalized);
+                assert_eq!(a.name, expected.name);
+                assert_eq!(a.image_url, expected.image_url);
+                assert_eq!(a.api_key, expected.api_key);
+            },
+            Err(e) => panic!("Error: {:?}", e)
         }
-    }";
-    let result: Result<Envelope, _> = json::decode(error);
-    match result {
-        Ok(ref env) => {
-            assert_eq!(*env, Envelope {
-                error: Some(Error {
-                    message: "The resource could not be found.".to_string(),
-                    typ: "invalid_request".to_string(),
-                    cat: "~(=^‥^)".to_string(),
-                }),
-                devices: None,
-                pushes: None,
-                contacts: None,
-                channels: None,
-                subscriptions: None,
-                clients: None,
-                grants: None,
-                cursor: None
-            });
-
-            assert_eq!(env.is_ok(), false);
-            assert_eq!(env.is_err(), true);
-            //assert_eq!(env.err(), Some(&env.error.unwrap()));
-            //assert_eq!(env.ok(), None);
-            //assert_eq!(env.result(), Err(&env.error.unwrap()));
-            //panic!("{}", env);
-        },
-        err @ _ => panic!("Unexpected result: {}", err)
     }
-}
 
-#[test]
-fn test_decode_ok_result() {
-    let envelope = "{
-        \"devices\": [],
-        \"grants\": [],
-        \"pushes\": [],
-        \"contacts\": []
-    }";
-    let result: Result<Envelope, _> = json::decode(envelope);
-    match result {
-        Ok(ref env) => {
-            assert_eq!(*env, Envelope {
-                devices: Some(vec![]),
-                grants: Some(vec![]),
-                pushes: Some(vec![]),
-                contacts: Some(vec![]),
-                channels: None,
-                clients: None,
-                subscriptions: None,
-                error: None,
-                cursor: None
-            });
+    #[test]
+    fn test_decode_err_result() {
+        let error = "{
+            \"error\": {
+                \"message\": \"The resource could not be found.\",
+                \"type\": \"invalid_request\",
+                \"cat\": \"~(=^‥^)\"
+            }
+        }";
+        let result: Result<Envelope, _> = json::decode(error);
+        match result {
+            Ok(ref env) => {
+                assert_eq!(*env, Envelope {
+                    error: Some(Error {
+                        message: "The resource could not be found.".to_string(),
+                        typ: "invalid_request".to_string(),
+                        cat: "~(=^‥^)".to_string(),
+                    }),
+                    devices: None,
+                    pushes: None,
+                    contacts: None,
+                    channels: None,
+                    subscriptions: None,
+                    clients: None,
+                    grants: None,
+                    cursor: None
+                });
 
-            assert_eq!(env.is_ok(), true);
-            assert_eq!(env.is_err(), false);
-            //assert_eq!(env.err(), None);
-            //assert_eq!(env.ok(), Some(env));
-            //assert_eq!(env.result(), Ok(env));
-            panic!("{}", env);
-        },
-        _ => ()
-        //err @ _ => panic!("Unexpected result: {}", err)
+                assert_eq!(env.is_ok(), false);
+                assert_eq!(env.is_err(), true);
+                //assert_eq!(env.err(), Some(&env.error.unwrap()));
+                //assert_eq!(env.ok(), None);
+                //assert_eq!(env.result(), Err(&env.error.unwrap()));
+                //panic!("{:?}", env);
+            },
+            err @ _ => panic!("Unexpected result: {:?}", err)
+        }
     }
-}
 
-#[test]
-fn test_events() {
+    #[test]
+    fn test_decode_ok_result() {
+        let envelope = "{
+            \"devices\": [],
+            \"grants\": [],
+            \"pushes\": [],
+            \"contacts\": []
+        }";
+        let result: Result<Envelope, _> = json::decode(envelope);
+        match result {
+            Ok(ref env) => {
+                assert_eq!(*env, Envelope {
+                    devices: Some(vec![]),
+                    grants: Some(vec![]),
+                    pushes: Some(vec![]),
+                    contacts: Some(vec![]),
+                    channels: None,
+                    clients: None,
+                    subscriptions: None,
+                    error: None,
+                    cursor: None
+                });
+
+                assert_eq!(env.is_ok(), true);
+                assert_eq!(env.is_err(), false);
+                //assert_eq!(env.err(), None);
+                //assert_eq!(env.ok(), Some(env));
+                //assert_eq!(env.result(), Ok(env));
+                //panic!("{:?}", env);
+            },
+            _ => ()
+            //err @ _ => panic!("Unexpected result: {}", err)
+        }
+    }
 }

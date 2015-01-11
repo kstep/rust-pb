@@ -170,13 +170,15 @@ impl PbAPI {
 }
 
 #[test]
+#[allow(unused_imports)]
 fn test_get_objects() {
     use objects::{Push, Device, Subscription, Grant, Client, Channel, Contact};
     use objects::Envelope;
 
     let mut api = PbAPI::new(option_env!("PB_API_KEY").unwrap());
-    let r = api.loadn::<Push, Envelope>(10);
-    panic!("{}", r);
+    let r = api.loadn::<Push>(10);
+    r.unwrap();
+    //panic!("{:?}", r);
 }
 
 //#[test]

@@ -20,9 +20,9 @@ macro_rules! qs {
     }
 }
 
-pub struct PbAPI {
+pub struct PbAPI<'a> {
     api_key: String,
-    client: Client<HttpConnector>
+    client: Client<HttpConnector<'a>>
 }
 
 #[derive(Show)]
@@ -73,9 +73,9 @@ impl error::Error for PbError {
 pub type PbResult<R> = Result<R, PbError>;
 pub type PbVec<I> = (Vec<I>, Option<Cursor>);
 
-impl PbAPI {
+impl<'a> PbAPI<'a> {
 
-    pub fn new(api_key: &str) -> PbAPI {
+    pub fn new(api_key: &str) -> PbAPI<'a> {
         PbAPI {
             api_key: api_key.to_string(),
             client: Client::new()

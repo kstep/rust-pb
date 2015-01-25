@@ -1,9 +1,9 @@
 use std::error;
 use std::error::FromError;
+use std::fmt;
 
 use hyper::client::Client;
-use hyper::header::common::authorization::{Authorization, Basic};
-use hyper::header::common::content_type::ContentType;
+use hyper::header::{ContentType, Authorization, Basic};
 use hyper::net::HttpConnector;
 use hyper::{HttpResult, HttpError};
 
@@ -29,7 +29,8 @@ pub struct PbAPI<'a> {
 pub enum PbError {
     Http(HttpError),
     Pb(Error),
-    Js(json::DecoderError)
+    Js(json::DecoderError),
+    Fmt(json::EncoderError)
 }
 
 impl FromError<HttpError> for PbError {
@@ -44,20 +45,17 @@ impl FromError<json::DecoderError> for PbError {
     fn from_error(e: json::DecoderError) -> PbError { PbError::Js(e) }
 }
 
+impl FromError<json::EncoderError> for PbError {
+    fn from_error(e: json::EncoderError) -> PbError { PbError::Fmt(e) }
+}
+
 impl error::Error for PbError {
     fn description(&self) -> &str {
         match *self {
             PbError::Http(ref e) => e.description(),
             PbError::Pb(ref e) => e.description(),
+            PbError::Fmt(ref e) => e.description(),
             PbError::Js(ref e) => e.description()
-        }
-    }
-
-    fn detail(&self) -> Option<String> {
-        match *self {
-            PbError::Http(ref e) => e.detail(),
-            PbError::Pb(ref e) => e.detail(),
-            PbError::Js(ref e) => e.detail()
         }
     }
 
@@ -65,10 +63,23 @@ impl error::Error for PbError {
         match *self {
             PbError::Http(ref e) => Some(e as &error::Error),
             PbError::Pb(ref e) => Some(e as &error::Error),
+            PbError::Fmt(ref e) => Some(e as &error::Error),
             PbError::Js(ref e) => Some(e as &error::Error)
         }
     }
 }
+
+impl fmt::Display for PbError {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        match *self {
+            PbError::Http(ref e) => e.fmt(fmt),
+            PbError::Pb(ref e) => e.fmt(fmt),
+            PbError::Fmt(ref e) => e.fmt(fmt),
+            PbError::Js(ref e) => e.fmt(fmt)
+        }
+    }
+}
+
 
 pub type PbResult<R> = Result<R, PbError>;
 pub type PbVec<I> = (Vec<I>, Option<Cursor>);
@@ -114,7 +125,7 @@ impl<'a> PbAPI<'a> {
     // Eventually (when RFC 195 is completed) only T: PbMsg (PbObj) type parameter will be needed,
     // and T::Obj will be used and the second type.
     pub fn send<T: PbMsg>(&mut self, msg: &T) -> PbResult<T::Obj> {
-        let resp = try!(self.post(PbObj::root_uri(None::<T::Obj>), &*json::encode(msg)));
+        let resp = try!(self.post(PbObj::root_uri(None::<T::Obj>), &*try!(json::encode(msg))));
         match json::decode(&*resp) {
             Ok(o) => Ok(o),
             Err(e) => Err(match json::decode::<Error>(&*resp) {
@@ -169,17 +180,17 @@ impl<'a> PbAPI<'a> {
     }
 }
 
-#[test]
-#[allow(unused_imports)]
-fn test_get_objects() {
-    use objects::{Push, Device, Subscription, Grant, Client, Channel, Contact};
-    use objects::Envelope;
-
-    let mut api = PbAPI::new(option_env!("PB_API_KEY").unwrap());
-    let r = api.loadn::<Push>(10);
-    r.unwrap();
-    //panic!("{:?}", r);
-}
+//#[test]
+//#[allow(unused_imports)]
+//fn test_get_objects() {
+//    use objects::{Push, Device, Subscription, Grant, Client, Channel, Contact};
+//    use objects::Envelope;
+//
+//    let mut api = PbAPI::new(option_env!("PB_API_KEY").unwrap());
+//    let r = api.loadn::<Push>(10);
+//    r.unwrap();
+//    //panic!("{:?}", r);
+//}
 
 //#[test]
 //fn test_delete() {

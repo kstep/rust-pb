@@ -91,7 +91,7 @@ fn test_push_msg_encode() {
         data: PushData::Note,
         source_device_iden: None,
     };
-    assert_eq!(&*json::encode(&push), "{\"title\":\"Note Title\",\"body\":\"Note Body\",\"source_device_iden\":null,\"device_iden\":\"udx234acsdc\",\"type\":\"note\"}");
+    assert_eq!(&*json::encode(&push).unwrap(), "{\"title\":\"Note Title\",\"body\":\"Note Body\",\"source_device_iden\":null,\"device_iden\":\"udx234acsdc\",\"type\":\"note\"}");
 }
 
 #[test]
@@ -100,5 +100,5 @@ fn test_device_msg_encode() {
         nickname: "Nickname".to_string(),
         typ: "stream".to_string()
     };
-    assert_eq!(&*json::encode(&device), "{\"nickname\":\"Nickname\",\"type\":\"stream\"}");
+    assert_eq!(&*json::encode(&device).unwrap(), "{\"nickname\":\"Nickname\",\"type\":\"stream\"}");
 }

@@ -2,6 +2,7 @@ use std::str::FromStr;
 use url::Url;
 use rustc_serialize::{Encodable, Decodable, Encoder, Decoder};
 use std::error;
+use std::fmt;
 
 pub type Iden = String;
 pub type Cursor = String;
@@ -488,7 +489,10 @@ pub struct Error {
 
 impl error::Error for Error {
     fn description(&self) -> &str { "PushBuller error" }
-    fn detail(&self) -> Option<String> { Some(self.message.clone()) }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> Result<(), fmt::Error> { fmt.write_str(&*self.message) }
 }
 
 impl Decodable for Error {

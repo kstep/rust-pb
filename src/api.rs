@@ -25,7 +25,7 @@ pub struct PbAPI<'a> {
     client: Client<HttpConnector<'a>>
 }
 
-#[derive(Show)]
+#[derive(Debug)]
 pub enum PbError {
     Http(HttpError),
     Pb(Error),

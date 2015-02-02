@@ -9,7 +9,7 @@ pub trait PbMsg : Encodable {
     type Obj: super::objects::PbObj;
 }
 
-#[derive(PartialEq, Show)]
+#[derive(PartialEq, Debug)]
 pub enum TargetIden {
     CurrentUser,
     DeviceIden(Iden),
@@ -18,7 +18,7 @@ pub enum TargetIden {
     ClientIden(Iden),
 }
 
-#[derive(PartialEq, Show)]
+#[derive(PartialEq, Debug)]
 pub struct PushMsg {
     pub title: Option<String>,
     pub body: Option<String>,
@@ -51,7 +51,7 @@ impl Encodable for PushMsg {
     }
 }
 
-#[derive(PartialEq, Show)]
+#[derive(PartialEq, Debug)]
 pub struct DeviceMsg {
     pub nickname: String,
     pub typ: String,
@@ -71,7 +71,7 @@ impl Encodable for DeviceMsg {
     }
 }
 
-#[derive(PartialEq, Show, RustcEncodable)]
+#[derive(PartialEq, Debug, RustcEncodable)]
 pub struct ContactMsg {
     pub name: String,
     pub email: String,

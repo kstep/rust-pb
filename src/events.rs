@@ -1,7 +1,7 @@
 use rustc_serialize::{Decodable, Decoder};
 use objects::Push;
 
-#[derive(Show, PartialEq)]
+#[derive(Debug, PartialEq)]
 enum Event {
     Nop,
     PushTickle,

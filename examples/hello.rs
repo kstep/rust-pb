@@ -1,4 +1,4 @@
-#![allow(unstable)]
+#![feature(collections, os)]
 
 extern crate pb;
 

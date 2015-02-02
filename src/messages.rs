@@ -34,7 +34,7 @@ impl PbMsg for PushMsg {
 
 impl Encodable for PushMsg {
     fn encode<S: Encoder>(&self, encoder: &mut S) -> Result<(), S::Error> {
-        encoder.emit_struct("PushMsg", 0, |e| {
+        encoder.emit_struct("PushMsg", 5, |e| {
             try!(e.emit_struct_field("title", 0, |e| self.title.encode(e)));
             try!(e.emit_struct_field("body", 1, |e| self.body.encode(e)));
             try!(e.emit_struct_field("source_device_iden", 2, |e| self.source_device_iden.encode(e)));
@@ -63,7 +63,7 @@ impl PbMsg for DeviceMsg {
 
 impl Encodable for DeviceMsg {
     fn encode<S: Encoder>(&self, encoder: &mut S) -> Result<(), S::Error> {
-        encoder.emit_struct("DeviceMsg", 0, |e| {
+        encoder.emit_struct("DeviceMsg", 2, |e| {
             try!(e.emit_struct_field("nickname", 0, |e| self.nickname.encode(e)));
             try!(e.emit_struct_field("type", 1, |e| self.typ.encode(e)));
             Ok(())

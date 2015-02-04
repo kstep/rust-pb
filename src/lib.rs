@@ -4,7 +4,7 @@
 #![crate_type = "rlib"]
 
 #![feature(slicing_syntax)]
-#![feature(collections, core, io)]
+#![feature(core, io)]
 
 extern crate hyper;
 //extern crate websocket;

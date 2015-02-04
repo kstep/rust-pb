@@ -239,9 +239,13 @@ impl PbObj for Client {
 #[derive(Debug, PartialEq)]
 pub struct ListItem(bool, String);
 
+#[derive(Copy, Debug)]
+pub struct ListItemParseError;
+
 impl FromStr for ListItem {
-    fn from_str(s: &str) -> Option<ListItem> {
-        Some(ListItem(false, s.to_string()))
+    type Err = ListItemParseError;
+    fn from_str(s: &str) -> Result<ListItem, ListItemParseError> {
+        Ok(ListItem(false, s.to_string()))
     }
 }
 

@@ -1,4 +1,4 @@
-#![feature(collections, os)]
+#![feature(os)]
 
 extern crate pb;
 

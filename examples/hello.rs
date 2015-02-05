@@ -1,8 +1,8 @@
-#![feature(os)]
+#![feature(env)]
 
 extern crate pb;
 
-use std::os::getenv;
+use std::env;
 
 fn main() {
     let msg = pb::PushMsg {
@@ -13,6 +13,6 @@ fn main() {
         source_device_iden: None,
     };
 
-    let mut api = pb::PbAPI::new(&*getenv("PB_API_KEY").expect("missing PB_API_KEY environment variable"));
+    let mut api = pb::PbAPI::new(&*env::var_string("PB_API_KEY").ok().expect("missing PB_API_KEY environment variable"));
     api.send(&msg).unwrap();
 }

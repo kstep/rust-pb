@@ -3,6 +3,7 @@ use url::Url;
 use rustc_serialize::{Encodable, Decodable, Encoder, Decoder};
 use std::error;
 use std::fmt;
+use std::ops::Deref;
 
 pub type Iden = String;
 pub type Cursor = String;
@@ -246,6 +247,13 @@ impl FromStr for ListItem {
     type Err = ListItemParseError;
     fn from_str(s: &str) -> Result<ListItem, ListItemParseError> {
         Ok(ListItem(false, s.to_string()))
+    }
+}
+
+impl Deref for ListItem {
+    type Target = str;
+    fn deref<'a>(&'a self) -> &'a str {
+        &*self.1
     }
 }
 

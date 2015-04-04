@@ -1,6 +1,7 @@
 use std::error;
-use std::error::FromError;
+use std::convert::From;
 use std::fmt;
+use std::io::Read;
 
 use hyper::client::Client;
 use hyper::header::{ContentType, Authorization, Basic};
@@ -33,20 +34,20 @@ pub enum PbError {
     Fmt(json::EncoderError)
 }
 
-impl FromError<HttpError> for PbError {
-    fn from_error(e: HttpError) -> PbError { PbError::Http(e) }
+impl From<HttpError> for PbError {
+    fn from(e: HttpError) -> PbError { PbError::Http(e) }
 }
 
-impl FromError<Error> for PbError {
-    fn from_error(e: Error) -> PbError { PbError::Pb(e) }
+impl From<Error> for PbError {
+    fn from(e: Error) -> PbError { PbError::Pb(e) }
 }
 
-impl FromError<json::DecoderError> for PbError {
-    fn from_error(e: json::DecoderError) -> PbError { PbError::Js(e) }
+impl From<json::DecoderError> for PbError {
+    fn from(e: json::DecoderError) -> PbError { PbError::Js(e) }
 }
 
-impl FromError<json::EncoderError> for PbError {
-    fn from_error(e: json::EncoderError) -> PbError { PbError::Fmt(e) }
+impl From<json::EncoderError> for PbError {
+    fn from(e: json::EncoderError) -> PbError { PbError::Fmt(e) }
 }
 
 impl error::Error for PbError {
@@ -95,22 +96,26 @@ impl<'a> PbAPI<'a> {
 
     fn get(&mut self, path: &str, params: &[(&str, &str)]) -> HttpResult<String> {
         let url = format!("{}{}?{}", BASE_URL, path, params.iter().filter(|v| v.1 != "").map(|&(k, v)| format!("{}={}&", k, v)).fold(String::new(), |acc, item| acc + &*item));
-        self.client
+        let mut response = try!(self.client
             .get(&*url)
             .header(Authorization(Basic { username: self.api_key.clone(), password: None }))
-            .send()
-            .and_then(|&: mut r| r.read_to_string().map_err(FromError::from_error))
+            .send());
+        let mut content = String::new();
+        try!(response.read_to_string(&mut content));
+        Ok(content)
     }
 
     fn post(&mut self, path: &str, content: &str) -> HttpResult<String> {
         let url = format!("{}{}", BASE_URL, path);
-        self.client
+        let mut response = try!(self.client
             .post(&*url)
             .header(Authorization(Basic { username: self.api_key.clone(), password: None }))
             .header(ContentType("application/json".parse().unwrap()))
             .body(content)
-            .send()
-            .and_then(|&: mut r| r.read_to_string().map_err(FromError::from_error))
+            .send());
+        let mut content = String::new();
+        try!(response.read_to_string(&mut content));
+        Ok(content)
     }
 
     fn delete(&mut self, path: &str) -> HttpResult<()> {
@@ -129,8 +134,8 @@ impl<'a> PbAPI<'a> {
         match json::decode(&*resp) {
             Ok(o) => Ok(o),
             Err(e) => Err(match json::decode::<Error>(&*resp) {
-                Ok(err) => FromError::from_error(err),
-                Err(_) => FromError::from_error(e)
+                Ok(err) => From::from(err),
+                Err(_) => From::from(e)
             })
         }
     }
@@ -146,7 +151,7 @@ impl<'a> PbAPI<'a> {
         let c = cursor.map(|v| v.to_string()).unwrap_or("".to_string());
         let result = try!(self.get(obj, &*qs![limit -> &*l, modified_after -> &*s, cursor -> &*c]));
         let env = try!(json::decode::<Envelope>(&*result));
-        env.get::<R>().map_err(FromError::from_error)
+        env.get::<R>().map_err(From::from)
     }
 
     pub fn load_by_iden<R: PbObj>(&mut self, iden: Iden) -> PbResult<R> {

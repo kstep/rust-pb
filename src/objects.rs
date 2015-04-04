@@ -239,7 +239,7 @@ impl PbObj for Client {
 #[derive(Debug, PartialEq)]
 pub struct ListItem(bool, String);
 
-#[derive(Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct ListItemParseError;
 
 impl FromStr for ListItem {

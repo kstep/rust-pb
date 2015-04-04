@@ -28,6 +28,48 @@ pub struct PushMsg {
     pub source_device_iden: Option<Iden>,
 }
 
+impl PushMsg {
+    pub fn new(target: TargetIden) -> PushMsg {
+        PushMsg {
+            title: None,
+            body: None,
+            target: target,
+            data: PushData::Note,
+            source_device_iden: None
+        }
+    }
+
+    pub fn note(target: TargetIden, title: Option<&str>, body: Option<&str>) -> PushMsg {
+        PushMsg {
+            title: title.map(|v| v.to_string()),
+            body: body.map(|v| v.to_string()),
+            target: target,
+            data: PushData::Note,
+            source_device_iden: None
+        }
+    }
+
+    pub fn title(mut self, title: &str) -> PushMsg {
+        self.title = Some(title.to_string());
+        self
+    }
+
+    pub fn body(mut self, body: &str) -> PushMsg {
+        self.body = Some(body.to_string());
+        self
+    }
+
+    pub fn source(mut self, source: Iden) -> PushMsg {
+        self.source_device_iden = Some(source);
+        self
+    }
+
+    pub fn data(mut self, data: PushData) -> PushMsg {
+        self.data = data;
+        self
+    }
+}
+
 impl PbMsg for PushMsg {
     type Obj = super::objects::Push;
 }
@@ -101,4 +143,11 @@ fn test_device_msg_encode() {
         typ: "stream".to_string()
     };
     assert_eq!(&*json::encode(&device).unwrap(), "{\"nickname\":\"Nickname\",\"type\":\"stream\"}");
+}
+
+#[test]
+fn test_build_msg_push() {
+    let push = PushMsg::new(TargetIden::DeviceIden("udx111asdf".to_string()))
+        .body("Hello, world").title("Title");
+    assert_eq!(&*json::encode(&push).unwrap(), "{\"title\":\"Title\",\"body\":\"Hello, world\",\"source_device_iden\":null,\"device_iden\":\"udx111asdf\",\"type\":\"note\"}");
 }

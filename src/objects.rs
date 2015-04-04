@@ -10,7 +10,7 @@ pub type Timestamp = f64;
 
 pub trait PbObj : Decodable + Sized {
     //fn uri(&self) -> String { format!("{}/{}", PbObj::root_uri(None::<Self>), self.iden()) }
-    fn root_uri(_: Option<Self>) -> &'static str;
+    fn root_uri() -> &'static str;
 }
 
 #[derive(Debug, PartialEq, RustcDecodable, RustcEncodable)]
@@ -217,23 +217,23 @@ impl Encodable for Push {
 }
 
 impl PbObj for Push {
-    fn root_uri(_: Option<Push>) -> &'static str { "pushes" }
+    fn root_uri() -> &'static str { "pushes" }
 }
 
 impl PbObj for Device {
-    fn root_uri(_: Option<Device>) -> &'static str { "devices" }
+    fn root_uri() -> &'static str { "devices" }
 }
 
 impl PbObj for Contact {
-    fn root_uri(_: Option<Contact>) -> &'static str { "contacts" }
+    fn root_uri() -> &'static str { "contacts" }
 }
 
 impl PbObj for Grant {
-    fn root_uri(_: Option<Grant>) -> &'static str { "grants" }
+    fn root_uri() -> &'static str { "grants" }
 }
 
 impl PbObj for Client {
-    fn root_uri(_: Option<Client>) -> &'static str { "clients" }
+    fn root_uri() -> &'static str { "clients" }
 }
 
 #[derive(Debug, PartialEq)]
@@ -387,7 +387,7 @@ pub struct Channel {
 }
 
 impl PbObj for Channel {
-    fn root_uri(_: Option<Channel>) -> &'static str { "channels" }
+    fn root_uri() -> &'static str { "channels" }
 }
 
 #[derive(Debug, PartialEq, RustcDecodable)]
@@ -410,7 +410,7 @@ pub struct Subscription {
 }
 
 impl PbObj for Subscription {
-    fn root_uri(_: Option<Subscription>) -> &'static str { "subscriptions" }
+    fn root_uri() -> &'static str { "subscriptions" }
 }
 
 #[derive(Debug, PartialEq, RustcDecodable)]

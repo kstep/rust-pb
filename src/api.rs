@@ -130,7 +130,7 @@ impl<'a> PbAPI<'a> {
     // Eventually (when RFC 195 is completed) only T: PbMsg (PbObj) type parameter will be needed,
     // and T::Obj will be used and the second type.
     pub fn send<T: PbMsg>(&mut self, msg: &T) -> PbResult<T::Obj> {
-        let resp = try!(self.post(PbObj::root_uri(None::<T::Obj>), &*try!(json::encode(msg))));
+        let resp = try!(self.post(T::Obj::root_uri(), &*try!(json::encode(msg))));
         match json::decode(&*resp) {
             Ok(o) => Ok(o),
             Err(e) => Err(match json::decode::<Error>(&*resp) {
@@ -141,7 +141,7 @@ impl<'a> PbAPI<'a> {
     }
 
     pub fn remove<O: PbObj>(&mut self, iden: Iden) -> PbResult<()> {
-        try!(self.delete(&*format!("{}/{}", PbObj::root_uri(None::<O>), iden)));
+        try!(self.delete(&*format!("{}/{}", O::root_uri(), iden)));
         Ok(())
     }
 
@@ -155,33 +155,33 @@ impl<'a> PbAPI<'a> {
     }
 
     pub fn load_by_iden<R: PbObj>(&mut self, iden: Iden) -> PbResult<R> {
-        let url = format!("{}/{}", PbObj::root_uri(None::<R>), iden);
+        let url = format!("{}/{}", R::root_uri(), iden);
         let result = try!(self.get(&*url, &[]));
         Ok(try!(json::decode(&*result)))
     }
 
     pub fn load_since<R: PbObj + FromEnvelope>(&mut self, since: Timestamp) -> PbResult<PbVec<R>> {
-        self._load::<R>(PbObj::root_uri(None::<R>), None, Some(since), None)
+        self._load::<R>(R::root_uri(), None, Some(since), None)
     }
 
     pub fn load_from<R: PbObj + FromEnvelope>(&mut self, cursor: Cursor) -> PbResult<PbVec<R>> {
-        self._load::<R>(PbObj::root_uri(None::<R>), None, None, Some(cursor))
+        self._load::<R>(R::root_uri(), None, None, Some(cursor))
     }
 
     pub fn load<R: PbObj + FromEnvelope>(&mut self) -> PbResult<PbVec<R>> {
-        self._load::<R>(PbObj::root_uri(None::<R>), None, None, None)
+        self._load::<R>(R::root_uri(), None, None, None)
     }
 
     pub fn loadn<R: PbObj + FromEnvelope>(&mut self, limit: usize) -> PbResult<PbVec<R>> {
-        self._load::<R>(PbObj::root_uri(None::<R>), Some(limit), None, None)
+        self._load::<R>(R::root_uri(), Some(limit), None, None)
     }
 
     pub fn loadn_from<R: PbObj + FromEnvelope>(&mut self, limit: usize, cursor: Cursor) -> PbResult<PbVec<R>> {
-        self._load::<R>(PbObj::root_uri(None::<R>), Some(limit), None, Some(cursor))
+        self._load::<R>(R::root_uri(), Some(limit), None, Some(cursor))
     }
 
     pub fn loadn_since<R: PbObj + FromEnvelope>(&mut self, limit: usize, since: Timestamp) -> PbResult<PbVec<R>> {
-        self._load::<R>(PbObj::root_uri(None::<R>), Some(limit), Some(since), None)
+        self._load::<R>(R::root_uri(), Some(limit), Some(since), None)
     }
 }
 

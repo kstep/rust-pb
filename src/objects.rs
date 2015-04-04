@@ -522,7 +522,6 @@ impl Decodable for Error {
 #[cfg(test)]
 mod tests {
     use rustc_serialize::json;
-    use std::num::Float;
     use super::{Error, Envelope, Account, PushData, ListItem, Push};
     use url::Url;
 

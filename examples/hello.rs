@@ -1,5 +1,3 @@
-#![feature(env)]
-
 extern crate pb;
 
 use std::env;

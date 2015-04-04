@@ -3,13 +3,10 @@
 #![crate_type = "dylib"]
 #![crate_type = "rlib"]
 
-#![feature(slicing_syntax)]
-#![feature(core, io)]
-
 extern crate hyper;
 //extern crate websocket;
 extern crate url;
-extern crate "rustc-serialize" as rustc_serialize;
+extern crate rustc_serialize;
 
 pub use objects::{Iden, Cursor, Timestamp, Envelope, Push, PushData, Account, Device, Contact, Client, Channel, ChannelInfo, Subscription, Grant, ListItem, Error};
 pub use messages::{TargetIden, PushMsg, DeviceMsg, ContactMsg};

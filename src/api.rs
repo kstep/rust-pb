@@ -5,7 +5,6 @@ use std::io::Read;
 
 use hyper::client::Client;
 use hyper::header::{ContentType, Authorization, Basic};
-use hyper::net::HttpConnector;
 use hyper::{HttpResult, HttpError};
 
 use rustc_serialize::json;
@@ -21,9 +20,9 @@ macro_rules! qs {
     }
 }
 
-pub struct PbAPI<'a> {
+pub struct PbAPI {
     api_key: String,
-    client: Client<HttpConnector<'a>>
+    client: Client
 }
 
 #[derive(Debug)]
@@ -85,9 +84,9 @@ impl fmt::Display for PbError {
 pub type PbResult<R> = Result<R, PbError>;
 pub type PbVec<I> = (Vec<I>, Option<Cursor>);
 
-impl<'a> PbAPI<'a> {
+impl PbAPI {
 
-    pub fn new(api_key: &str) -> PbAPI<'a> {
+    pub fn new(api_key: &str) -> PbAPI {
         PbAPI {
             api_key: api_key.to_string(),
             client: Client::new()

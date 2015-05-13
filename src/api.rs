@@ -127,8 +127,6 @@ impl PbAPI {
             .map(|_| ())
     }
 
-    // Eventually (when RFC 195 is completed) only T: PbMsg (PbObj) type parameter will be needed,
-    // and T::Obj will be used and the second type.
     pub fn send<T: PbMsg>(&mut self, msg: &T) -> PbResult<T::Obj> {
         let resp = try!(self.post(T::Obj::root_uri(), &*try!(json::encode(msg))));
         match json::decode(&*resp) {

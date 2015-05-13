@@ -5,7 +5,8 @@ use std::io::Read;
 
 use hyper::client::Client;
 use hyper::header::{ContentType, Authorization, Basic};
-use hyper::{HttpResult, HttpError};
+use hyper::error::Result as HttpResult;
+use hyper::error::Error as HttpError;
 
 use rustc_serialize::json;
 

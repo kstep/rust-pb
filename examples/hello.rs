@@ -4,8 +4,8 @@ use std::env;
 
 fn main() {
     let msg = pb::PushMsg {
-        title: Some("Hello, world!".to_string()),
-        body: Some("This a push test".to_string()),
+        title: Some("Hello, world!".into()),
+        body: Some("This a push test".into()),
         target: pb::TargetIden::CurrentUser,
         data: pb::PushData::Note,
         source_device_iden: None,

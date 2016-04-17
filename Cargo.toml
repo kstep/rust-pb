@@ -5,7 +5,7 @@ homepage = "https://github.com/kstep/rust-pb"
 license = "MIT"
 name = "pb"
 repository = "https://github.com/kstep/rust-pb.git"
-version = "0.1.0"
+version = "0.2.0"
 
 [dependencies]
 hyper = "0.8.1"
